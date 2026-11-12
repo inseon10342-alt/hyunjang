@@ -153,10 +153,17 @@ function run(fn, ...args) {
     });
   }
   if (!window.API_URL || !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(window.API_URL)) return Promise.reject(new Error('config.js 에 웹앱 주소(API_URL)를 넣어 주세요.'));
-  const ac = new AbortController(), t = setTimeout(() => ac.abort(), 120000);
-  return fetch(window.API_URL, { method: 'POST', body: JSON.stringify({ fn, args }), signal: ac.signal, redirect: 'follow', credentials: 'omit', cache: 'no-store' })
-    .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .finally(() => clearTimeout(t));
+  // <script> 로 요청 (아이폰 Safari 는 다른 주소로의 fetch 응답을 막는 경우가 있음). 요청마다 1회용 콜백 이름을 쓴다.
+  return new Promise((res, rej) => {
+    const cb = '__r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const sc = document.createElement('script');
+    const done = (fnr, v) => { clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } sc.remove(); fnr(v); };
+    const t = setTimeout(() => done(rej, new Error('timeout')), 90000);
+    window[cb] = (r) => done(res, r);
+    sc.onerror = () => done(rej, new Error('Load failed'));
+    sc.src = window.API_URL + '?cb=' + cb + '&q=' + encodeURIComponent(JSON.stringify({ fn, args })) + '&_=' + Date.now();
+    document.head.appendChild(sc);
+  });
 }
 // 화면은 휴대폰에 암호화해 둔 직전 결과로 바로 그리고, 서버 확인은 뒤에서 한다 (바뀌었으면 다시 그림)
 App.inflight = {}; App.failAt = {};
