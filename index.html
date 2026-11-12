@@ -114,7 +114,7 @@ nav.bn button.on{color:var(--blue)}
 @media (min-width:900px){
   .ctw{max-width:1400px;margin:0 auto;width:100%}
   .grid4{grid-template-columns:repeat(4,1fr)}
-  .ctg{display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:start}
+  .ctg{display:grid;grid-template-columns:1.3fr 1fr;align-items:start}
   .fgrid{grid-template-columns:repeat(4,1fr)}
   .ctcards{display:none}.cttable{display:block;overflow-x:auto;padding:0}
   .cttable table{border-collapse:collapse;width:100%;font-size:13.5px}
@@ -425,7 +425,7 @@ VIEWS.me = async () => {
 // ===================== 계약 이력 (2023년~ 전체 · 조회 전용) =====================
 // 원본은 통합관리 엑셀 용역대장(끝난 용역 포함). 연도는 데이터에서 자동으로 만든다(고정값 없음).
 App.ct = { y: '전체', q: {}, m: 'amt', adv: false, dl: false };
-const CT_COLS = [['연도', '계약연도'], ['현장명', '현장명'], ['발주처', '발주처'], ['시공사', '시공사'], ['종류', '점검종류'], ['공종', '공종'], ['계약일', '계약일'], ['기간', '용역기간'],
+const CT_COLS = [['연도', '계약연도'], ['현장명', '현장명'], ['발주처', '발주처(계약자)'], ['시공사', '시공사'], ['종류', '점검종류'], ['공종', '공종'], ['계약일', '계약일'], ['기간', '용역기간'],
   ['공급가', '계약금액(VAT 별도)'], ['계약금', '계약금액(VAT 포함)'], ['상태', '계약상태'], ['보고서', '보고서 제출'], ['입금', '입금 상태']];
 const norm = (s) => String(s || '').replace(/\s/g, '').toLowerCase();
 const man = (n) => (n >= 1e8 ? (n / 1e8).toFixed(n >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '억' : Math.round(n / 1e4).toLocaleString('ko-KR') + '만');
@@ -477,8 +477,7 @@ VIEWS.contracts = async () => {
     <section class="card"><div class="h2r"><h2>연도별 계약</h2><div class="seg"><button data-cm2="amt" class="${App.ct.m === 'amt' ? 'on' : ''}">금액</button><button data-cm2="n" class="${App.ct.m === 'n' ? 'on' : ''}">건수</button></div></div>
       ${ctBars(SY, App.ct.y)}
       <div class="ytab">${SY.years.map(([y, v]) => `<div><b>${esc(y)}년</b><span>${v.n}건</span><span>${won(v.amt)}</span><small>VAT 포함 ${won(v.vat)}</small></div>`).join('')}</div></section>
-    <section class="card"><h2>발주처별 실적 <span class="note">상위 6 · VAT 별도</span></h2>${ctRank(S.payers, S.amt)}</section>
-    <section class="card"><h2>점검종류별 실적</h2>${ctRank(S.kinds, S.amt)}<p class="note" style="margin:8px 0 0">한 계약에 여러 종류가 있으면 각각에 포함됩니다.</p></section>
+    <section class="card"><h2>발주처(계약자)별 실적 <span class="note">상위 6 · VAT 별도</span></h2>${ctRank(S.payers, S.amt)}</section>
     </div>
     <div class="search">${ic('search', 20)}<input id="cq" type="search" placeholder="현장명·발주처·시공사·공종 검색" value="${esc(q.all || '')}" aria-label="계약 검색"></div>
     <div class="ctbar"><button class="btn sm" id="adv" aria-expanded="${App.ct.adv}">상세 검색${advN ? ` <span class="pill p-info" style="height:20px;margin-left:4px">${advN}</span>` : ''}</button>
@@ -487,7 +486,7 @@ VIEWS.contracts = async () => {
       <button class="row tap" data-dl="result"><div class="grow"><div class="t">검색 결과</div><div class="s">지금 조건의 ${F.length}건</div></div>${ic('down', 18)}</button>
       <button class="row tap" data-dl="all"><div class="grow"><div class="t">전체 계약 목록</div><div class="s">${L.length}건 · 연도별 시트 포함</div></div>${ic('down', 18)}</button>
       ${yearsAll.map((y) => `<button class="row tap" data-dl="y${y}"><div class="grow"><div class="t">${y}년 계약 목록</div><div class="s">${L.filter((c) => c.연도 === y).length}건</div></div>${ic('down', 18)}</button>`).join('')}
-      <button class="row tap" data-dl="stats"><div class="grow"><div class="t">연도별 계약 통계</div><div class="s">연도별 · 발주처별 · 점검종류별</div></div>${ic('down', 18)}</button>
+      <button class="row tap" data-dl="stats"><div class="grow"><div class="t">연도별 계약 통계</div><div class="s">연도별 · 상태별 · 발주처별</div></div>${ic('down', 18)}</button>
       <p class="note" id="dlmsg" style="margin:6px 0 0">엑셀 파일(.xlsx)로 받습니다. 원본 데이터는 바뀌지 않습니다.</p></section>` : ''}
     ${App.ct.adv ? `<section class="card adv"><div class="fgrid">
       <label>현장명<input class="inp sm" data-f="name" value="${esc(q.name || '')}"></label><label>발주처<input class="inp sm" data-f="payer" value="${esc(q.payer || '')}"></label>
@@ -541,8 +540,7 @@ async function ctDownload(kind, L, F) {
     const S = ctStats(L), tot = ['합계', S.n, S.amt, S.vat, S.paid];
     sheets.push(['연도별', [['계약연도', '계약 건수', '계약금액(VAT 별도)', '계약금액(VAT 포함)', '수금 합계']].concat(S.years.map(([y]) => { const xs = L.filter((c) => String(c.연도 || '미정') === String(y)); return [y, xs.length, xs.reduce((a, c) => a + c.공급가, 0), xs.reduce((a, c) => a + c.계약금, 0), xs.reduce((a, c) => a + c.수금, 0)]; }), [tot])]);
     sheets.push(['상태별', [['계약상태', '건수']].concat(Object.entries(S.st))]);
-    sheets.push(['발주처별', [['발주처', '건수', '계약금액(VAT 별도)', '계약금액(VAT 포함)']].concat(S.payers.map(([k, v]) => [k, v.n, v.amt, v.vat]))]);
-    sheets.push(['점검종류별', [['점검종류', '건수', '계약금액(VAT 별도)', '계약금액(VAT 포함)']].concat(S.kinds.map(([k, v]) => [k, v.n, v.amt, v.vat]))]);
+    sheets.push(['발주처별', [['발주처(계약자)', '건수', '계약금액(VAT 별도)', '계약금액(VAT 포함)']].concat(S.payers.map(([k, v]) => [k, v.n, v.amt, v.vat]))]);
     fname = `계약통계_${stamp}`;
   }
   try {
@@ -575,7 +573,7 @@ VIEWS.contract = async (arg) => {
       ${kv([['청구 후 입금 대기', c.대기 ? won(c.대기) + '원' : ''], ['잔여금', won(c.잔여) + '원'], ['미수금', c.미수 ? won(c.미수) + '원' : ''], ['VAT 기준', esc(c.VAT기준)], ['종합보고서', esc(c.종합보고서) + (c.종합보고서금액 ? ' · ' + won(c.종합보고서금액) + '원' : '')], ['계약 외 금액', c.계약외 ? won(c.계약외) + '원' : ''], ['할증분', c.할증 ? won(c.할증) + '원' : '']])}</section>
     <section class="card"><h2>계약일 · 용역기간</h2>${kv([['계약일', ymd(c.계약일) || '엑셀에 입력 없음'], ['용역기간', period(c)], ['준공(예정)일', ymd(c.준공)], ['완료일', ymd(c.완료일)]])}
       <p class="note" style="margin:6px 0 0">용역기간은 계약일(없으면 첫 점검일)부터 마지막 보고서 제출일(진행 중이면 준공 예정일)까지입니다.</p></section>
-    <section class="card"><h2>발주처 · 시공사</h2>${kv([['발주처(계약 상대)', esc(c.발주처)], ['실제 입금처', esc(c.실제입금처)], ['시공사', esc(c.시공사)], ['사업자등록번호', esc(c.사업자번호)], ['대표자', esc(c.대표자)], ['소재지', esc(c.소재지)], ['업태 · 종목', esc([c.업태, c.종목].filter(Boolean).join(' · '))], ['현장 주소', esc(c.주소)], ['관할구', esc(c.관할구)], ['규모', esc(c.규모)]])}</section>
+    <section class="card"><h2>발주처 · 시공사</h2>${kv([['발주처(계약자)', esc(c.발주처)], ['실제 입금처', c.실제입금처 ? esc(c.실제입금처) + ' <span class="note">(계약자와 다름)</span>' : ''], ['시공사', esc(c.시공사)], ['사업자등록번호', esc(c.사업자번호)], ['대표자', esc(c.대표자)], ['소재지', esc(c.소재지)], ['업태 · 종목', esc([c.업태, c.종목].filter(Boolean).join(' · '))], ['현장 주소', esc(c.주소)], ['관할구', esc(c.관할구)], ['규모', esc(c.규모)]])}</section>
     <section class="card"><h2>점검종류 · 공종</h2><div>${c.종류.map((k) => `<span class="tag">${esc(k)}</span>`).join('') || '-'}</div><div style="margin-top:6px">${c.공종.map((k) => `<span class="tag">${esc(k)}</span>`).join('')}</div></section>
     <section class="card"><h2>보고서 제출 <span class="note">${c.점검 ? `${c.제출}/${c.점검}` : ''}</span></h2>${(c.점검목록 || []).map((x) => `<div class="row"><div class="grow"><div class="t">${esc(x.항목)}</div><div class="s">점검 ${ymd(x.점검일) || '-'}${x.발송일 ? ' · 발송 ' + ymd(x.발송일) : ''}</div></div><span class="pill ${x.발송일 || x.단계 === '완료' || c.상태 === '완료' ? 'p-ok' : 'p-mute'}">${x.발송일 || x.단계 === '완료' || c.상태 === '완료' ? '제출' : esc(x.단계 || '미제출')}</span></div>`).join('') || '<div class="empty">점검 기록 없음</div>'}</section>
     <section class="card"><h2>계산서 · 입금</h2>${(c.계산서 || []).map((x) => `<div class="row"><div class="grow"><div class="t">${esc(x.품명 || '-')}</div><div class="s">발행 ${ymd(x.발행일)}${x.입금일 ? ' · 입금 ' + ymd(x.입금일) : ''}</div></div><div style="text-align:right"><b>${won(x.청구)}</b><div><span class="pill ${x.입금일 ? 'p-ok' : 'p-warn'}" style="height:20px">${x.입금일 ? '입금' : '대기'}</span></div></div></div>`).join('') || '<div class="empty">수금대장에 계산서 기록이 없습니다</div>'}</section>
@@ -616,7 +614,7 @@ function registerView(msg) {
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
 // ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
-const APP_VERSION = '2026-11-12c';
+const APP_VERSION = '2026-11-12d';
 async function checkVersion(manual) {
   if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
   try {
