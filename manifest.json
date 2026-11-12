@@ -1,0 +1,10 @@
+{
+  "name": "현장 조회",
+  "short_name": "현장 조회",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#172B4D",
+  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+}
