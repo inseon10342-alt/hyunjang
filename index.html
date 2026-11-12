@@ -150,8 +150,8 @@ nav.bn button.on{color:var(--blue)}
 .st b{display:block;font-size:14.5px}.st span{font-size:13px;color:var(--muted)}
 html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
 input,select,textarea,.inp,.inp.sm{font-size:16px !important}
-.kf{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
-.kchip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:#fff;font-size:13.5px;font-weight:700;color:var(--muted)}
+.kf{display:flex;flex-wrap:nowrap;gap:6px;margin:0 0 10px;overflow-x:auto;scrollbar-width:none}.kf::-webkit-scrollbar{display:none}
+.kchip{flex:1 0 auto;justify-content:center;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 10px;white-space:nowrap;border-radius:99px;border:1px solid var(--line);background:#fff;font-size:13.5px;font-weight:700;color:var(--muted)}
 .kchip i{width:9px;height:9px;border-radius:50%;background:#CBD5E1}.kchip span{font-size:12px;font-weight:600;color:var(--muted)}
 .kchip.on{border-color:var(--c);color:var(--c);background:#fff;box-shadow:inset 0 0 0 1px var(--c)}.kchip.on i{background:var(--c)}
 </style>
@@ -394,7 +394,7 @@ VIEWS.cal = async () => {
   const dayList = (d) => `<div class="dhead">${ymd(d)} <span class="note">${'일월화수목금토'[new Date(d + 'T00:00:00').getDay()]} · ${relD(d, today)}</span></div>${(groups[d] || []).map(row).join('') || '<div class="empty">일정 없음</div>'}`;
   const head = `<div class="calbar"><button class="ib2" id="pm" aria-label="이전 달">‹</button><b>${y}년 ${m + 1}월</b><button class="ib2" id="nm" aria-label="다음 달">›</button>
     <span class="grow"></span><button class="ib2 sm" id="tm">오늘</button><div class="seg"><button data-cm="month" class="${App.calMode === 'month' ? 'on' : ''}">달력</button><button data-cm="list" class="${App.calMode === 'list' ? 'on' : ''}">목록</button></div></div>
-    <div class="kf" role="group" aria-label="표시할 항목 (여러 개 선택 가능)">${Object.entries(kcol).map(([k, c]) => { const on = App.calKinds.indexOf(k) >= 0, n = evAll.filter((e) => e.k === k && e.d.slice(0, 7) === `${y}-${String(m + 1).padStart(2, '0')}`).length; return `<button class="kchip ${on ? 'on' : ''}" data-kf="${k}" aria-pressed="${on}" style="--c:${c}"><i></i>${k === '기한' ? '보고서 기한' : k === '연락' ? '현장 연락' : k === '예정' ? '점검 예정' : '점검'}<span>${n}</span></button>`; }).join('')}<span class="note" style="align-self:center">회색 = 완료·종료</span></div>`;
+    <div class="kf" role="group" aria-label="표시할 항목 (여러 개 선택 가능)">${Object.entries(kcol).map(([k, c]) => { const on = App.calKinds.indexOf(k) >= 0, n = evAll.filter((e) => e.k === k && e.d.slice(0, 7) === `${y}-${String(m + 1).padStart(2, '0')}`).length; return `<button class="kchip ${on ? 'on' : ''}" data-kf="${k}" aria-pressed="${on}" style="--c:${c}"><i></i>${k}<span>${n}</span></button>`; }).join('')}</div>`;
   let body;
   if (App.calMode === 'month') {
     const first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay()), cells = [];
@@ -402,6 +402,7 @@ VIEWS.cal = async () => {
     body = `<section class="card cal"><div class="cgrid">${'일월화수목금토'.split('').map((w, i) => `<div class="wd ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('')}
       ${cells.map((d) => { const k = isoD(d), es = groups[k] || [], out = d.getMonth() !== m; return `<button class="cd ${out ? 'out' : ''} ${k === today ? 'today' : ''} ${k === App.calSel ? 'sel' : ''} ${d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''}" data-day="${k}"><span class="n">${d.getDate()}</span>
         ${es.slice(0, 3).map((e) => `<span class="ev ${e.done ? 'done' : ''}" style="${e.done ? '' : `--c:${kcol[e.k]};--b:${kbg[e.k]}`}">${esc(short(e.s))}</span>`).join('')}${es.length > 3 ? `<span class="more">+${es.length - 3}</span>` : ''}</button>`; }).join('')}</div></section>
+      <p class="note" style="margin:-4px 2px 0">점검 = 점검일 · 예정 = 점검 예정일 · 기한 = 보고서 제출 기한 · 연락 = 다음 현장 연락 · 회색 = 완료·종료</p>
       <section class="card">${dayList(App.calSel)}</section>`;
   } else {
     body = `<section class="card">${Object.keys(groups).filter((d) => d.startsWith(`${y}-${String(m + 1).padStart(2, '0')}`)).sort().map(dayList).join('') || '<div class="empty">이 달에는 일정이 없습니다</div>'}</section>`;
@@ -778,7 +779,7 @@ function registerView(msg) {
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
 // ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
-const APP_VERSION = '2026-11-12f';
+const APP_VERSION = '2026-11-12g';
 async function checkVersion(manual) {
   if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
   try {
