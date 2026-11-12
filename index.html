@@ -124,6 +124,30 @@ nav.bn button.on{color:var(--blue)}
 }
 .hdr .ib.spin svg{animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.18);max-width:90vw}
+.lcard{padding:4px 12px 6px}.lcard .dhead{padding:12px 4px 4px}
+.li{display:flex;align-items:center;gap:10px;padding:12px 4px;border-top:1px solid #F0F3F7;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer}
+.lcard .dhead+.li,.lcard>.li:first-child{border-top:0}
+.li>svg{color:#A0AEC0;flex:none}
+.lbar{align-self:stretch;width:4px;border-radius:4px;flex:none;padding:0;height:auto}
+.lt{font-weight:700;font-size:15px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
+.ls{font-size:13px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ls b{color:var(--ink);font-weight:600}
+.lq{font-size:13.5px;color:#334155;background:var(--bg);border-radius:8px;padding:6px 9px;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lm{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.lm .pill{height:22px;font-size:12px}
+.att{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--muted)}
+.cn{display:inline-block;min-width:20px;padding:0 6px;border-radius:99px;background:var(--soft);color:var(--muted);font-size:12px;margin-left:4px}.chip.on .cn{background:rgba(255,255,255,.2);color:#fff}
+.cn-warn{background:var(--warnb);color:var(--warn)}.cn-bad{background:var(--badb);color:var(--bad)}
+.mh{font-size:17px;line-height:1.45;margin:10px 0 0;word-break:keep-all}
+.thread{display:flex;flex-direction:column;gap:12px}
+.msg{border-radius:14px;padding:12px 14px;border:1px solid var(--line)}.msg.out{background:#F8FAFC}.msg.in{background:#EEF4FF;border-color:#D6E4FE}
+.mhd{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px}.mhd b{color:var(--navy)}
+.mbody{font-size:14.5px;line-height:1.6;white-space:normal;word-break:break-word}.mbody.none{color:var(--muted);font-size:13.5px}
+.files{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.file{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12.5px}
+.wait{border:1px dashed #F5C27A;background:var(--warnb);color:var(--warn);border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-align:center}.wait.bad{border-color:#F3A5A5;background:var(--badb);color:var(--bad)}.wait.mute{border-color:var(--line);background:var(--bg);color:var(--muted)}
+.steps{display:flex;flex-direction:column;gap:0}.st{display:flex;gap:12px;position:relative;padding:0 0 16px}.st:last-child{padding-bottom:0}
+.st i{width:14px;height:14px;border-radius:50%;border:2px solid #CBD5E1;background:#fff;flex:none;margin-top:4px;position:relative;z-index:1}
+.st:not(:last-child)::before{content:'';position:absolute;left:6px;top:18px;bottom:0;width:2px;background:#E2E8F0}
+.st.on i{border-color:var(--blue);background:var(--blue)}.st.ok i{border-color:#16A34A;background:#16A34A}.st.bad i{border-color:var(--bad);background:var(--bad)}
+.st b{display:block;font-size:14.5px}.st span{font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -135,7 +159,7 @@ const PATHS = { home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>', sit
   grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
   back: '<path d="M15 6l-6 6 6 6"/>', refresh: '<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>', doc: '<path d="M6 3h9l4 4v14H6z"/>',
   won: '<path d="M4 7l3 10 5-10 5 10 3-10M3 11h18"/>', box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>', check: '<path d="M5 12l4 4 10-10"/>', phone: '<path d="M5 4h4l2 5-3 2a11 11 0 006 6l2-3 5 2v4a2 2 0 01-2 2A17 17 0 013 6a2 2 0 012-2z"/>',
-  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', book: '<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>', file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>', down: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>' };
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', book: '<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>', chev: '<path d="M9 6l6 6-6 6"/>', file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>', down: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>' };
 const ic = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[n]}</svg>`;
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const won = (n) => (n ? Math.round(n).toLocaleString('ko-KR') : '0');
@@ -397,14 +421,7 @@ VIEWS.pay = listView('pay', '계약·입금', (r) => { const sum = (k) => r.pay.
     <section class="card"><h2>입금 대기 계산서</h2>${r.invoices.sort((a, b) => b.경과 - a.경과).map((x) => `<button class="row tap" data-site="${esc(x.용역)}"><span class="pill ${x.경과 > 60 ? 'p-bad' : x.경과 > 30 ? 'p-warn' : 'p-mute'}">${x.경과}일</span><div class="grow"><div class="t ell">${esc(x.용역)}</div><div class="s">${esc(x.품명)} · ${ymd(x.발행일)}</div></div><span class="amt">${won(x.미입금)}</span></button>`).join('') || '<div class="empty">없음</div>'}</section>
     <section class="card"><h2>용역별 수금</h2>${r.pay.sort((a, b) => b.대기 - a.대기).map((p) => `<button class="row tap" data-site="${esc(p.용역)}" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;gap:8px"><span class="t ell grow">${esc(p.용역)}</span><b>${Math.round(p.기성율 * 100)}%</b></div><div class="bar"><i style="width:${Math.min(p.수금, p.계약금) / Math.max(1, p.계약금) * 100}%;background:#172B4D"></i><i style="width:${Math.min(p.대기, p.계약금) / Math.max(1, p.계약금) * 100}%;background:#60A5FA"></i></div><div class="s">수금 ${won(p.수금)} · 대기 ${won(p.대기)} / 계약 ${won(p.계약금)}</div></button>`).join('')}</section>
     <section class="card"><h2>최근 입금</h2>${r.paidRecent.map((x) => `<div class="row"><div class="grow"><div class="t ell">${esc(x.용역)}</div><div class="s">${ymd(x.입금일)} · ${esc(x.품명)}</div></div><span class="amt">${won(x.수금 || x.청구)}</span></div>`).join('')}</section>`; });
-VIEWS.requests = listView('requests', '자료 요청', (r) => { const open = r.requests.filter((x) => x.상태 !== '수신완료'), done = r.requests.filter((x) => x.상태 === '수신완료');
-  const c = (x) => `<button class="row tap" data-site="${esc(x.용역)}" style="flex-direction:column;align-items:stretch;gap:4px"><div style="display:flex;gap:8px;align-items:center"><span class="pill ${x.상태 === '수신완료' ? 'p-ok' : 'p-warn'}">${esc(x.상태 || '-')}</span><span class="s">${ymd(x.요청일)} · ${esc(x.방법)}</span></div><div class="t">${esc(x.자료)}</div><div class="s">${esc(x.용역)}${x.담당자 ? ' · ' + esc(x.담당자) : ''}${x.수신일 ? ' · ' + ymd(x.수신일) + ' 수신 (' + esc(x.소요) + '일)' : ''}</div></button>`;
-  return `<section class="card"><h2>미수신 · ${open.length}</h2>${open.map(c).join('') || '<div class="empty">미수신 요청이 없습니다</div>'}</section><section class="card"><h2>수신완료 · ${done.length}</h2>${done.slice(0, 30).map(c).join('')}</section>`; });
 VIEWS.reviews = listView('reviews', '보고서 검토', (r) => `<section class="card">${r.reviews.map((x) => `<div class="tl"><span class="dot" style="background:${x.상태 === '검토완료' ? '#16A34A' : '#F59E0B'}"></span><div class="grow"><div style="display:flex;gap:8px;align-items:center"><b>${esc(x.항목)}</b><span class="note">${esc(x.회차)}회차</span><span class="pill ${x.상태 === '검토완료' ? 'p-ok' : 'p-warn'}" style="margin-left:auto">${esc(x.상태 || '검토중')}</span></div><div class="note">${esc(x.용역)}</div><div class="note">${ymd(x.요청일)} 요청 → ${x.회신일 ? ymd(x.회신일) + ' 회신' : '회신 대기'} · ${esc(x.검토자)}</div>${x.의견 ? `<p class="memo">${esc(x.의견)}</p>` : ''}${x.조치 ? `<p class="memo" style="background:#EEF4FF">${esc(x.조치)}</p>` : ''}</div></div>`).join('') || '<div class="empty">없음</div>'}</section>`);
-VIEWS.contacts = listView('contacts', '현장 연락', (r) => { const last = {}; r.contacts.forEach((c) => { if (!(c.용역 in last)) last[c.용역] = c; });
-  const L = Object.values(last).sort((a, b) => (a.다음연락 || '9999').localeCompare(b.다음연락 || '9999')); const t = new Date().toISOString().slice(0, 10);
-  return `<section class="card"><h2>현장별 마지막 연락</h2>${L.map((c) => `<button class="row tap" data-site="${esc(c.용역)}" style="flex-direction:column;align-items:stretch;gap:4px"><div style="display:flex;gap:8px;align-items:center"><span class="t ell grow">${esc(c.용역)}</span>${c.다음연락 ? `<span class="pill ${c.다음연락 <= t ? 'p-warn' : 'p-mute'}">다음 ${md(c.다음연락)}</span>` : ''}</div><div class="s">${ymd(c.연락일)} · ${esc(c.방법)} · ${esc(c.담당자)} · ${esc(c.공정)}</div>${c.메모 ? `<p class="memo">${esc(c.메모)}</p>` : ''}</button>`).join('')}</section>`; });
-VIEWS.mails = listView('mails', '메일', (r) => `<section class="card">${r.mails.map((m) => `<button class="row tap" data-site="${esc(m.용역)}" style="flex-direction:column;align-items:stretch;gap:4px"><div style="display:flex;gap:8px;align-items:center"><span class="pill p-mute">${esc(m.구분 || '-')}</span><span class="s">${ymd(m.보낸날)}</span><span class="pill ${/대기/.test(m.회신상태) ? (m.경과 > 14 ? 'p-bad' : 'p-warn') : /받음/.test(m.회신상태) ? 'p-ok' : 'p-mute'}" style="margin-left:auto">${esc(m.회신상태 || '-')}</span></div><div class="t">${esc(m.제목)}</div><div class="s">${esc(m.용역)}${m.받는사람 ? ' · ' + esc(m.받는사람) : ''}${m.첨부 ? ' · 첨부: ' + esc(m.첨부) : ''}</div>${m.회신내용 ? `<p class="memo">${esc(m.회신내용)}</p>` : ''}</button>`).join('') || '<div class="empty">없음</div>'}</section>`);
 VIEWS.journal = listView('journal', '업무일지', (r) => { const g = {}; r.journal.forEach((j) => { (g[j.날짜] = g[j.날짜] || []).push(j); });
   return `<section class="card">${Object.entries(g).map(([d, js]) => `<div class="dhead">${ymd(d)} <span class="note">${esc(js[0].요일)}</span></div>${js.map((j) => `<div class="tl"><span class="dot" style="background:${j.상태 === '완료' ? '#16A34A' : '#F59E0B'}"></span><div class="grow"><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill p-info">${esc(j.구분 || '기타')}</span><span class="pill ${j.상태 === '완료' ? 'p-ok' : 'p-warn'}">${esc(j.상태 || '-')}</span></div><div class="t" style="margin-top:4px">${esc(j.현장)}</div><div>${esc(j.내용)}</div>${j.후속 ? `<div class="note">후속 · ${esc(j.후속)}</div>` : ''}</div></div>`).join('')}`).join('')}</section>`; });
 VIEWS.outsource = listView('outsource', '외주·택배', (r) => `<section class="card"><h2>외주</h2>${r.outsource.map((o) => `<div class="row"><div class="grow"><div class="t ell">${esc(o.업체)}</div><div class="s">${ymd(o.일자)} · ${esc(o.용역)} · ${esc(o.작업)}</div></div><div style="text-align:right"><div class="amt">${won(o.청구)}</div><span class="pill ${o.미지급 > 0 ? 'p-warn' : 'p-ok'}">${esc(o.상태)}</span></div></div>`).join('') || '<div class="empty">없음</div>'}</section>
@@ -582,6 +599,139 @@ VIEWS.contract = async (arg) => {
     ${c.비고 ? `<section class="card"><h2>비고</h2><div class="memo">${esc(c.비고)}</div></section>` : ''}`, { bind: bindCommon });
 };
 
+// ===================== 메일 · 자료 요청 · 현장 연락: 읽기 쉬운 목록 + 누르면 상세 =====================
+App.lf = {}; // 화면별 필터·검색 { mails: {f, q}, ... }
+const ttl = (t) => String(t || '').replace(/^[^\s_]{2,10}_\s*/, ''); // 제목 앞 '회사명_' 은 목록에서만 생략
+const shortSite = (n) => String(n || '').replace(/\s*(신축공사|복합시설 신축공사|근린생활시설 신축공사|주택재개발정비사업|재건축정비사업|해체공사|공사)$/,'');
+const tday = () => isoD(new Date());
+const daysTo = (d) => (d ? Math.round((new Date(d + 'T00:00:00') - new Date(tday() + 'T00:00:00')) / 864e5) : null);
+const nl = (s) => esc(s).replace(/\n/g, '<br>');
+const clip = (n) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11l-8.5 8.5a5 5 0 01-7-7L14 4a3.5 3.5 0 015 5l-8.5 8.5a2 2 0 01-3-3L15 7"/></svg>`;
+// 공통 목록 틀: 필터 칩 + 검색 + 날짜별 묶음
+function filterList(view, title, items, opt) {
+  const st = App.lf[view] = App.lf[view] || { f: opt.chips[0][0], q: '' };
+  if (!opt.chips.some(([k]) => k === st.f)) st.f = opt.chips[0][0];
+  const paint = () => {
+    const chip = opt.chips.find(([k]) => k === st.f), q = norm(st.q);
+    const xs = items.filter(chip[1]).filter((x) => !q || opt.text(x).some((v) => norm(v).indexOf(q) >= 0));
+    const groups = []; let last = null;
+    xs.forEach((x) => { const g = opt.group(x); if (!last || last.g !== g) groups.push(last = { g, xs: [] }); last.xs.push(x); });
+    $('#fl').innerHTML = groups.map((g) => `<section class="card lcard">${g.g ? `<div class="dhead">${g.g}</div>` : ''}${g.xs.map(opt.row).join('')}</section>`).join('') || `<div class="card"><div class="empty">${opt.empty || '해당하는 기록이 없습니다'}</div></div>`;
+    $('#fc').textContent = xs.length + '건';
+    document.querySelectorAll('[data-sf2]').forEach((b) => b.classList.toggle('on', b.dataset.sf2 === st.f));
+    $('#fl').querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => opt.open(b.dataset.open)));
+  };
+  shell(title, `<div class="chips">${opt.chips.map(([k, f, cls]) => { const n = items.filter(f).length; return `<button class="chip" data-sf2="${esc(k)}">${esc(k)} <span class="cn ${cls && n ? cls : ''}">${n}</span></button>`; }).join('')}</div>
+    <div class="search">${ic('search', 20)}<input id="fq" type="search" placeholder="${esc(opt.ph)}" value="${esc(st.q)}" aria-label="검색"></div>
+    <div class="note" style="padding:0 2px" id="fc"></div><div id="fl" style="display:flex;flex-direction:column;gap:12px"></div>`, { bind: () => {
+    bindCommon(); paint();
+    $('#fq').oninput = (e) => { st.q = e.target.value; paint(); };
+    document.querySelectorAll('[data-sf2]').forEach((b) => (b.onclick = () => { st.f = b.dataset.sf2; paint(); }));
+  } });
+}
+const mkey = (m) => [m.보낸날, m.no, m.제목].join('|');
+const mstat = (m) => (/대기/.test(m.회신상태) ? ['p-' + (m.경과 > 14 ? 'bad' : 'warn'), `회신 대기 · ${m.경과 || 0}일`] : /받음/.test(m.회신상태) ? ['p-ok', '회신 받음'] : ['p-mute', m.회신상태 || '-']);
+VIEWS.mails = async () => {
+  const M = (await call('mails')).mails;
+  filterList('mails', '메일', M, {
+    chips: [['전체', () => true], ['회신 대기', (m) => /대기/.test(m.회신상태), 'cn-warn'], ['회신 받음', (m) => /받음/.test(m.회신상태)], ['회신 불필요', (m) => /불필요/.test(m.회신상태)]],
+    ph: '제목·현장·받는 사람 검색', text: (m) => [m.제목, m.용역, m.받는사람, m.이메일, m.구분, m.항목],
+    group: (m) => (m.보낸날 ? `${ymd(m.보낸날)} <span class="note">${'일월화수목금토'[new Date(m.보낸날 + 'T00:00:00').getDay()]}</span>` : '날짜 없음'),
+    row: (m) => { const [c, l] = mstat(m); return `<button class="li tap" data-open="${esc(mkey(m))}"><span class="lbar ${c}"></span><div class="grow"><div class="lt">${esc(ttl(m.제목))}</div>
+      <div class="ls"><b>${esc(shortSite(m.용역))}</b>${m.구분 ? ' · ' + esc(m.구분) : ''}${m.항목 ? ' · ' + esc(m.항목) : ''}</div>
+      <div class="lm"><span class="pill ${c}">${l}</span>${m.첨부 ? `<span class="att">${clip(14)} ${esc(m.첨부.split(/[,·]/).length)}</span>` : ''}${m.회신내용 ? '<span class="att">회신 내용 있음</span>' : ''}</div></div>${ic('chev', 18)}</button>`; },
+    open: (k) => { const m = M.find((x) => mkey(x) === k); go('mail', { k, title: shortSite(m && m.용역) || '메일' }); },
+  });
+};
+VIEWS.mail = async (arg) => {
+  const M = (await call('mails')).mails, m = M.find((x) => mkey(x) === arg.k);
+  if (!m) return shell('메일', '<div class="card empty">메일을 찾지 못했습니다. 새로고침해 보세요.</div>', { bind: bindCommon });
+  const [c, l] = mstat(m), files = (s) => String(s || '').split(/\s*[,·]\s*/).filter(Boolean).map((f) => `<span class="file">${clip(14)} ${esc(f)}</span>`).join('');
+  const same = M.filter((x) => x.용역 === m.용역 && mkey(x) !== arg.k);
+  shell(shortSite(m.용역) || '메일', `
+    <section class="card"><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill ${c}">${l}</span>${m.구분 ? `<span class="pill p-mute">${esc(m.구분)}</span>` : ''}${m.항목 ? `<span class="pill p-info">${esc(m.항목)}</span>` : ''}</div>
+      <h2 class="mh">${esc(m.제목)}</h2>
+      <dl class="kv"><dt>현장</dt><dd>${esc(m.용역)}</dd><dt>받는 사람</dt><dd>${esc(m.받는사람 || '-')}</dd><dt>이메일</dt><dd>${m.이메일.split(/\s*,\s*/).filter((v, i, a) => v && a.indexOf(v) === i).map(esc).join('<br>') || '-'}</dd><dt>보낸 날짜</dt><dd>${ymd(m.보낸날) || '-'}</dd>${m.회신필요 ? `<dt>회신 필요</dt><dd>${esc(m.회신필요)}</dd>` : ''}</dl>
+      <button class="btn sm" style="margin-top:12px" data-site="${esc(m.용역)}">현장 보기 ›</button></section>
+    <section class="card"><div class="thread">
+      <div class="msg out"><div class="mhd"><b>보낸 메일</b><span>${ymd(m.보낸날)}</span></div>${m.내용 ? `<div class="mbody">${nl(m.내용)}</div>` : '<div class="mbody none">엑셀에 메일 내용이 입력되지 않았습니다.</div>'}${m.첨부 ? `<div class="files">${files(m.첨부)}</div>` : ''}</div>
+      ${/받음/.test(m.회신상태) || m.회신내용 ? `<div class="msg in"><div class="mhd"><b>회신${m.받는사람 ? ' · ' + esc(m.받는사람) : ''}</b><span>${ymd(m.회신일) || ''}</span></div>${m.회신내용 ? `<div class="mbody">${nl(m.회신내용)}</div>` : '<div class="mbody none">회신 내용이 입력되지 않았습니다.</div>'}${m.회신첨부 ? `<div class="files">${files(m.회신첨부)}</div>` : ''}</div>`
+        : /대기/.test(m.회신상태) ? `<div class="wait ${m.경과 > 14 ? 'bad' : ''}">회신을 기다리는 중 · 보낸 지 ${m.경과 || 0}일</div>` : `<div class="wait mute">${esc(m.회신상태 || '회신 정보 없음')}</div>`}
+    </div></section>
+    ${m.비고 ? `<section class="card"><h2>비고</h2><div class="memo">${nl(m.비고)}</div></section>` : ''}
+    ${same.length ? `<section class="card"><h2>같은 현장 메일 · ${same.length}</h2>${same.map((x) => { const [cc, ll] = mstat(x); return `<button class="row tap" data-mk="${esc(mkey(x))}"><div class="grow"><div class="t" style="font-size:14px;line-height:1.4">${esc(ttl(x.제목))}</div><div class="s">${ymd(x.보낸날)}${x.구분 ? ' · ' + esc(x.구분) : ''}</div></div><span class="pill ${cc}">${ll}</span></button>`; }).join('')}</section>` : ''}`,
+    { bind: () => { bindCommon(); document.querySelectorAll('[data-mk]').forEach((b) => (b.onclick = () => go('mail', { k: b.dataset.mk, title: shortSite(m.용역) }))); } });
+};
+const rkey = (x) => [x.요청일, x.no, x.자료].join('|');
+const rDone = (x) => /완료/.test(x.상태);
+const rOver = (x) => !rDone(x) && x.기한 && daysTo(x.기한) < 0;
+const rstat = (x) => (rDone(x) ? ['p-ok', '수신완료'] : rOver(x) ? ['p-bad', `기한 초과 ${-daysTo(x.기한)}일`] : x.기한 ? ['p-warn', `미수신 · 기한 ${dlab(daysTo(x.기한))}`] : ['p-warn', x.상태 || '미수신']);
+VIEWS.requests = async () => {
+  const Q = (await call('requests')).requests;
+  filterList('requests', '자료 요청', Q, {
+    chips: [['미수신', (x) => !rDone(x), 'cn-warn'], ['기한 초과', rOver, 'cn-bad'], ['수신완료', rDone], ['전체', () => true]],
+    ph: '자료·현장·담당자 검색', text: (x) => [x.자료, x.용역, x.담당자, x.항목, x.메모],
+    group: (x) => (x.요청일 ? `${ymd(x.요청일)} 요청` : '요청일 없음'),
+    row: (x) => { const [c, l] = rstat(x); return `<button class="li tap" data-open="${esc(rkey(x))}"><span class="lbar ${c}"></span><div class="grow"><div class="lt">${esc(x.자료 || '(내용 없음)')}</div>
+      <div class="ls"><b>${esc(shortSite(x.용역))}</b>${x.항목 ? ' · ' + esc(x.항목) : ''}${x.담당자 ? ' · ' + esc(x.담당자) : ''}</div>
+      <div class="lm"><span class="pill ${c}">${l}</span>${x.수신일 ? `<span class="att">${ymd(x.수신일)} 수신${x.소요 !== '' ? ` · ${esc(x.소요)}일 걸림` : ''}</span>` : ''}</div></div>${ic('chev', 18)}</button>`; },
+    open: (k) => { const x = Q.find((y) => rkey(y) === k); go('request', { k, title: shortSite(x && x.용역) || '자료 요청' }); },
+  });
+};
+VIEWS.request = async (arg) => {
+  const Q = (await call('requests')).requests, x = Q.find((y) => rkey(y) === arg.k);
+  if (!x) return shell('자료 요청', '<div class="card empty">요청을 찾지 못했습니다. 새로고침해 보세요.</div>', { bind: bindCommon });
+  const [c, l] = rstat(x), same = Q.filter((y) => y.용역 === x.용역 && rkey(y) !== arg.k);
+  shell(shortSite(x.용역) || '자료 요청', `
+    <section class="card"><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill ${c}">${l}</span>${x.구분 ? `<span class="pill p-mute">${esc(x.구분)}</span>` : ''}${x.항목 ? `<span class="pill p-info">${esc(x.항목)}</span>` : ''}</div>
+      <h2 class="mh">${nl(x.자료 || '(요청 내용 없음)')}</h2>
+      <dl class="kv"><dt>현장</dt><dd>${esc(x.용역)}</dd><dt>담당자</dt><dd>${esc(x.담당자 || '-')}</dd><dt>요청 방법</dt><dd>${esc(x.방법 || '-')}</dd>${x.점검일 ? `<dt>관련 점검일</dt><dd>${ymd(x.점검일)}</dd>` : ''}${x.원요청 ? `<dt>원요청 NO</dt><dd>${esc(x.원요청)}</dd>` : ''}</dl>
+      <button class="btn sm" style="margin-top:12px" data-site="${esc(x.용역)}">현장 보기 ›</button></section>
+    <section class="card"><h2>진행</h2><div class="steps">
+      <div class="st on"><i></i><div><b>요청</b><span>${ymd(x.요청일) || '-'}${x.방법 ? ' · ' + esc(x.방법) : ''}</span></div></div>
+      ${x.기한 ? `<div class="st ${rOver(x) ? 'bad' : 'on'}"><i></i><div><b>회신 기한</b><span>${ymd(x.기한)}${!rDone(x) ? ' · ' + dlab(daysTo(x.기한)) : ''}</span></div></div>` : ''}
+      <div class="st ${rDone(x) ? 'ok' : ''}"><i></i><div><b>${rDone(x) ? '수신 완료' : '수신 대기'}</b><span>${x.수신일 ? ymd(x.수신일) + (x.소요 !== '' ? ` · 요청 후 ${esc(x.소요)}일` : '') : '아직 받지 않았습니다'}</span></div></div></div></section>
+    ${x.메모 ? `<section class="card"><h2>수신 자료 검토 · 통화 메모</h2><div class="memo">${nl(x.메모)}</div></section>` : ''}
+    ${x.비고 ? `<section class="card"><h2>비고</h2><div class="memo">${nl(x.비고)}</div></section>` : ''}
+    ${same.length ? `<section class="card"><h2>같은 현장 요청 · ${same.length}</h2>${same.map((y) => { const [cc, ll] = rstat(y); return `<button class="row tap" data-rk="${esc(rkey(y))}"><div class="grow"><div class="t" style="font-size:14px;line-height:1.4">${esc(y.자료)}</div><div class="s">${ymd(y.요청일)}${y.항목 ? ' · ' + esc(y.항목) : ''}</div></div><span class="pill ${cc}">${ll}</span></button>`; }).join('')}</section>` : ''}`,
+    { bind: () => { bindCommon(); document.querySelectorAll('[data-rk]').forEach((b) => (b.onclick = () => go('request', { k: b.dataset.rk, title: shortSite(x.용역) }))); } });
+};
+VIEWS.contacts = async () => {
+  const C = (await call('contacts')).contacts, last = {};
+  C.forEach((c) => { if (!(c.용역 in last)) last[c.용역] = c; });
+  const latest = Object.values(last), t = tday();
+  const st = App.lf.contacts = App.lf.contacts || { f: '현장별 최근', q: '' };
+  const isLatest = (c) => last[c.용역] === c;
+  filterList('contacts', '현장 연락', C, {
+    chips: [['현장별 최근', isLatest], ['다음 연락 도래', (c) => isLatest(c) && c.다음연락 && c.다음연락 <= t, 'cn-warn'], ['전체 기록', () => true]],
+    ph: '현장·담당자·메모 검색', text: (c) => [c.용역, c.담당자, c.메모, c.공정, c.비고],
+    group: (c) => (st.f === '전체 기록' ? (c.연락일 ? ymd(c.연락일) : '날짜 없음') : ''),
+    row: (c) => { const n = daysTo(c.다음연락); return `<button class="li tap" data-open="${esc(c.용역)}"><span class="lbar ${c.다음연락 && n <= 0 ? 'p-warn' : 'p-info'}"></span><div class="grow">
+      <div class="lt" style="-webkit-line-clamp:1">${esc(c.용역)}</div>
+      <div class="ls">${ymd(c.연락일)} · ${esc(c.방법 || '-')}${c.담당자 ? ' · ' + esc(c.담당자) : ''}</div>
+      ${c.공정 ? `<div class="ls">현재 공정: ${esc(c.공정)}</div>` : ''}
+      ${c.메모 ? `<div class="lq">${esc(c.메모)}</div>` : ''}
+      <div class="lm">${c.다음연락 ? `<span class="pill ${n <= 0 ? 'p-warn' : 'p-mute'}">다음 연락 ${md(c.다음연락)}${n != null ? ' · ' + dlab(n) : ''}</span>` : ''}${c.예상시기 ? `<span class="att">다음 점검 예상 ${md(c.예상시기)}</span>` : ''}</div></div>${ic('chev', 18)}</button>`; },
+    open: (n) => go('contact', { n, title: shortSite(n) }),
+  });
+};
+VIEWS.contact = async (arg) => {
+  const C = (await call('contacts')).contacts.filter((c) => c.용역 === arg.n);
+  const nx = C.find((c) => c.다음연락), ex = C.find((c) => c.예상시기 || c.예상점검);
+  shell(shortSite(arg.n) || '현장 연락', `
+    <section class="card"><h2 class="mh" style="margin-top:0">${esc(arg.n)}</h2>
+      <div class="grid2" style="margin-top:10px"><div class="box"><span>마지막 연락</span><b style="font-size:15px">${C[0] ? ymd(C[0].연락일) : '-'}</b><small class="note">${C[0] ? esc([C[0].방법, C[0].담당자].filter(Boolean).join(' · ')) : ''}</small></div>
+      <div class="box"><span>다음 연락 예정</span><b style="font-size:15px">${nx ? ymd(nx.다음연락) : '-'}</b><small class="note">${nx ? dlab(daysTo(nx.다음연락)) : ''}</small></div></div>
+      ${ex ? `<p class="note" style="margin:10px 0 0">다음 점검 예상: ${esc(ex.예상점검 || '')} ${ex.예상시기 ? ymd(ex.예상시기) : ''}</p>` : ''}
+      <button class="btn sm" style="margin-top:12px" data-site="${esc(arg.n)}">현장 보기 ›</button></section>
+    <section class="card"><h2>연락 기록 · ${C.length}</h2>${C.map((c) => `<div class="tl"><span class="dot" style="background:var(--blue)"></span><div class="grow">
+      <div class="t" style="font-size:14.5px">${ymd(c.연락일)} <span class="note">· ${esc(c.방법 || '-')}${c.담당자 ? ' · ' + esc(c.담당자) : ''}</span></div>
+      ${c.공정 ? `<div class="s" style="margin-top:2px"><b>현재 공정</b> ${esc(c.공정)}</div>` : ''}
+      ${c.메모 ? `<div class="memo">${nl(c.메모)}</div>` : ''}
+      ${c.예상점검 || c.예상시기 || c.다음연락 ? `<div class="lm" style="margin-top:6px">${c.예상점검 || c.예상시기 ? `<span class="att">다음 점검 ${esc(c.예상점검 || '')} ${c.예상시기 ? md(c.예상시기) : ''}</span>` : ''}${c.다음연락 ? `<span class="att">다음 연락 ${md(c.다음연락)}</span>` : ''}</div>` : ''}
+      ${c.비고 ? `<div class="s" style="margin-top:4px">비고: ${esc(c.비고)}</div>` : ''}</div></div>`).join('') || '<div class="empty">기록 없음</div>'}</section>`, { bind: bindCommon });
+};
+
 function bindCommon() {
   document.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => { const k = b.dataset.go; if (['sites', 'cal'].includes(k)) { App.stack = [[k, {}]]; show(); } else go(k, { title: (MORE.find((m) => m[0] === k) || [])[2] }); }));
   document.querySelectorAll('[data-site]').forEach((b) => (b.onclick = () => go('site', { name: b.dataset.site, title: b.dataset.site })));
@@ -614,7 +764,7 @@ function registerView(msg) {
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
 // ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
-const APP_VERSION = '2026-11-12d';
+const APP_VERSION = '2026-11-12e';
 async function checkVersion(manual) {
   if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
   try {
