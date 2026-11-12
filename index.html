@@ -154,6 +154,8 @@ input,select,textarea,.inp,.inp.sm{font-size:16px !important}
 .kchip{flex:1 0 auto;justify-content:center;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 10px;white-space:nowrap;border-radius:99px;border:1px solid var(--line);background:#fff;font-size:13.5px;font-weight:700;color:var(--muted)}
 .kchip i{width:9px;height:9px;border-radius:50%;background:#CBD5E1}.kchip span{font-size:12px;font-weight:600;color:var(--muted)}
 .kchip.on{border-color:var(--c);color:var(--c);background:#fff;box-shadow:inset 0 0 0 1px var(--c)}.kchip.on i{background:var(--c)}
+.calbar b,.calbar button,.seg button{white-space:nowrap}
+@media (max-width:380px){.calbar{gap:4px}.calbar b{font-size:15px;min-width:0}.ib2{min-width:32px;height:34px;padding:0 8px}.ib2.sm{font-size:12.5px}.seg button{padding:0 8px;font-size:12.5px}.kchip{padding:0 8px;font-size:13px;gap:4px}}
 </style>
 </head>
 <body>
@@ -779,7 +781,7 @@ function registerView(msg) {
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
 // ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
-const APP_VERSION = '2026-11-12g';
+const APP_VERSION = '2026-11-12h';
 async function checkVersion(manual) {
   if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
   try {
