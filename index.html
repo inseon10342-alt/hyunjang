@@ -11,7 +11,7 @@
 <title>현장 조회</title>
 <script src="config.js"></script>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#172B4D">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css" media="print" onload="this.media='all'">
 <style>
@@ -148,6 +148,12 @@ nav.bn button.on{color:var(--blue)}
 .st:not(:last-child)::before{content:'';position:absolute;left:6px;top:18px;bottom:0;width:2px;background:#E2E8F0}
 .st.on i{border-color:var(--blue);background:var(--blue)}.st.ok i{border-color:#16A34A;background:#16A34A}.st.bad i{border-color:var(--bad);background:var(--bad)}
 .st b{display:block;font-size:14.5px}.st span{font-size:13px;color:var(--muted)}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
+input,select,textarea,.inp,.inp.sm{font-size:16px !important}
+.kf{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.kchip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:#fff;font-size:13.5px;font-weight:700;color:var(--muted)}
+.kchip i{width:9px;height:9px;border-radius:50%;background:#CBD5E1}.kchip span{font-size:12px;font-weight:600;color:var(--muted)}
+.kchip.on{border-color:var(--c);color:var(--c);background:#fff;box-shadow:inset 0 0 0 1px var(--c)}.kchip.on i{background:var(--c)}
 </style>
 </head>
 <body>
@@ -374,19 +380,21 @@ VIEWS.site = async (arg) => {
 };
 // 일정: 달력 / 목록 전환, 한 달씩 받아 온다. 완료된 점검·끝난 용역은 회색
 App.calMode = (() => { try { return localStorage.getItem('calMode') || 'month'; } catch (e) { return 'month'; } })();
+App.calKinds = (() => { try { const v = JSON.parse(localStorage.getItem('calKinds') || 'null'); return Array.isArray(v) && v.length ? v : ['점검']; } catch (e) { return ['점검']; } })();
 VIEWS.cal = async () => {
   const t = new Date(), today = isoD(t);
   if (!App.calYM) App.calYM = [t.getFullYear(), t.getMonth()];
   if (!App.calSel) App.calSel = today;
   const [y, m] = App.calYM;
-  const ev = (await call('schedule', calRange(y, m))).events;
+  const evAll = (await call('schedule', calRange(y, m))).events;
+  const ev = evAll.filter((e) => App.calKinds.indexOf(e.k) >= 0);
   const groups = {}; ev.forEach((e) => { (groups[e.d] = groups[e.d] || []).push(e); });
   const kc = { 점검: 'p-navy', 예정: 'p-warn', 기한: 'p-bad', 연락: 'p-info' }, kcol = { 점검: '#172B4D', 예정: '#F59E0B', 기한: '#B91C1C', 연락: '#2563EB' }, kbg = { 점검: '#DCE5F5', 예정: '#FEF0D9', 기한: '#FBE1E1', 연락: '#E3ECFE' };
   const row = (e) => `<${e.closed ? 'div' : 'button'} class="row ${e.closed ? '' : 'tap'} ${e.done ? 'done' : ''}" ${e.closed ? '' : `data-site="${esc(e.s)}"`}><span class="pill ${e.done ? 'p-mute' : kc[e.k]}">${e.k}</span><div class="grow"><div class="t ell">${esc(e.s)}</div><div class="s">${esc(e.t)}${e.done ? (e.closed ? ' · 용역 종료' : ' · 완료') : ''}</div></div></${e.closed ? 'div' : 'button'}>`;
   const dayList = (d) => `<div class="dhead">${ymd(d)} <span class="note">${'일월화수목금토'[new Date(d + 'T00:00:00').getDay()]} · ${relD(d, today)}</span></div>${(groups[d] || []).map(row).join('') || '<div class="empty">일정 없음</div>'}`;
   const head = `<div class="calbar"><button class="ib2" id="pm" aria-label="이전 달">‹</button><b>${y}년 ${m + 1}월</b><button class="ib2" id="nm" aria-label="다음 달">›</button>
     <span class="grow"></span><button class="ib2 sm" id="tm">오늘</button><div class="seg"><button data-cm="month" class="${App.calMode === 'month' ? 'on' : ''}">달력</button><button data-cm="list" class="${App.calMode === 'list' ? 'on' : ''}">목록</button></div></div>
-    <div class="lg" style="margin:0 0 8px">${Object.entries(kcol).map(([k, c]) => `<span><i style="background:${c}"></i>${k === '기한' ? '보고서 기한' : k === '연락' ? '현장 연락' : k}</span>`).join('')}<span><i style="background:#B8C1CE"></i>완료·종료</span></div>`;
+    <div class="kf" role="group" aria-label="표시할 항목 (여러 개 선택 가능)">${Object.entries(kcol).map(([k, c]) => { const on = App.calKinds.indexOf(k) >= 0, n = evAll.filter((e) => e.k === k && e.d.slice(0, 7) === `${y}-${String(m + 1).padStart(2, '0')}`).length; return `<button class="kchip ${on ? 'on' : ''}" data-kf="${k}" aria-pressed="${on}" style="--c:${c}"><i></i>${k === '기한' ? '보고서 기한' : k === '연락' ? '현장 연락' : k === '예정' ? '점검 예정' : '점검'}<span>${n}</span></button>`; }).join('')}<span class="note" style="align-self:center">회색 = 완료·종료</span></div>`;
   let body;
   if (App.calMode === 'month') {
     const first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay()), cells = [];
@@ -403,6 +411,12 @@ VIEWS.cal = async () => {
     const mv = (n) => { const d = new Date(y, m + n, 1); App.calYM = [d.getFullYear(), d.getMonth()]; App.calSel = isoD(d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear() ? t : d); show(); };
     $('#pm').onclick = () => mv(-1); $('#nm').onclick = () => mv(1);
     $('#tm').onclick = () => { App.calYM = null; App.calSel = null; show(); };
+    document.querySelectorAll('[data-kf]').forEach((b) => (b.onclick = () => {
+      const k = b.dataset.kf, i = App.calKinds.indexOf(k);
+      if (i >= 0) { if (App.calKinds.length > 1) App.calKinds.splice(i, 1); } else App.calKinds.push(k);
+      try { localStorage.setItem('calKinds', JSON.stringify(App.calKinds)); } catch (e) {}
+      show();
+    }));
     document.querySelectorAll('[data-cm]').forEach((b) => (b.onclick = () => { App.calMode = b.dataset.cm; try { localStorage.setItem('calMode', App.calMode); } catch (e) {} show(); }));
     document.querySelectorAll('[data-day]').forEach((b) => (b.onclick = () => { App.calSel = b.dataset.day; const o = new Date(b.dataset.day + 'T00:00:00'); if (o.getMonth() !== m) App.calYM = [o.getFullYear(), o.getMonth()]; show(); }));
   } });
@@ -764,7 +778,7 @@ function registerView(msg) {
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
 // ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
-const APP_VERSION = '2026-11-12e';
+const APP_VERSION = '2026-11-12f';
 async function checkVersion(manual) {
   if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
   try {
@@ -781,6 +795,10 @@ async function checkVersion(manual) {
 }
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.setAttribute('role', 'status'); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(false); });
+
+// 확대·축소 막기 (아이폰은 viewport 설정을 무시할 때가 있어 제스처도 막음)
+['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
 
 // ---------- 시작: 저장된 기기 인증이 있으면 바로 대시보드
 (async () => {
