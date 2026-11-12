@@ -221,6 +221,15 @@ let prefetched = false;
 function prefetch() {
   if (prefetched) return; prefetched = true;
   setTimeout(() => { [['sites', {}], ['schedule', calRange()]].forEach(([a, g]) => { const k = a + ':' + JSON.stringify(g); Vault.get('c:' + k).then((c) => { if (!c || Date.now() - c.at > 15000) netCall(a, g, k).catch(() => {}); }); }); }, 800);
+  // 업무 메뉴 8개는 하루 한 번만, 오늘 받아 둔 게 없는 화면만 하나씩 차례로 받는다
+  setTimeout(async () => {
+    const today = isoD(new Date());
+    for (const a of ['writing', 'pay', 'requests', 'reviews', 'contacts', 'mails', 'journal', 'outsource']) {
+      const k = a + ':{}', c = await Vault.get('c:' + k);
+      if (c && isoD(new Date(c.at)) === today) continue;
+      try { await netCall(a, {}, k); } catch (e) { break; }
+    }
+  }, 3000);
 }
 
 // ---------- 화면 틀
