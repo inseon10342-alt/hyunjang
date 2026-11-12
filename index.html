@@ -122,6 +122,8 @@ nav.bn button.on{color:var(--blue)}
   .cttable td{padding:10px;border-bottom:1px solid #F0F3F7;vertical-align:top}.cttable td:nth-child(2){min-width:220px}.cttable td:nth-child(3),.cttable td:nth-child(4){min-width:120px}.cttable td:nth-child(6){min-width:130px}.cttable td:nth-child(7),.cttable td:nth-child(8){white-space:nowrap}.cttable td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
   .cttable tr:hover td{background:#F8FAFC}
 }
+.hdr .ib.spin svg{animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.18);max-width:90vw}
 </style>
 </head>
 <body>
@@ -271,7 +273,13 @@ function shell(title, body, opt) {
   $('#app').innerHTML = `<header class="hdr">${back ? `<button class="ib" id="bk" aria-label="뒤로">${ic('back')}</button>` : ''}<h1>${esc(title)}</h1><button class="ib" id="rf" aria-label="새로고침">${ic('refresh')}</button></header>${stamp}<main id="m">${body}</main>
     <nav class="bn" aria-label="메뉴">${TABS.map(([k, i, l]) => `<button data-tab="${k}" class="${App.stack[0] && App.stack[0][0] === k ? 'on' : ''}" ${App.stack[0] && App.stack[0][0] === k ? 'aria-current="page"' : ''}>${ic(i)}<span>${l}</span></button>`).join('')}</nav>`;
   if (back) $('#bk').onclick = () => { App.stack.pop(); show(); };
-  $('#rf').onclick = () => show(true);
+  $('#rf').onclick = async () => {
+    const b = $('#rf'); if (b.classList.contains('spin')) return;
+    b.classList.add('spin');
+    if (await checkVersion(true)) return;
+    try { await show(true); } finally { const n = $('#rf'); if (n) n.classList.remove('spin'); }
+    toast(App.offline ? '연결이 불안정해 갱신하지 못했습니다' : '최신 내용으로 새로 고쳤습니다');
+  };
   document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { App.stack = [[b.dataset.tab, {}]]; show(); }));
   if (opt.bind) opt.bind();
   window.scrollTo(0, 0);
@@ -607,8 +615,28 @@ function registerView(msg) {
 }
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
+// ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
+const APP_VERSION = '2026-11-12c';
+async function checkVersion(manual) {
+  if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return false;
+    const v = String((await r.json()).v || '');
+    if (!v || v === APP_VERSION) return false;
+    let tried = ''; try { tried = sessionStorage.getItem('vtry') || ''; } catch (e) {}
+    if (tried === v && !manual) return false; // 한 번 시도했는데도 같으면 반복하지 않음
+    try { sessionStorage.setItem('vtry', v); } catch (e) {}
+    location.replace(location.pathname + '?v=' + encodeURIComponent(v));
+    return true;
+  } catch (e) { return false; }
+}
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.setAttribute('role', 'status'); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(false); });
+
 // ---------- 시작: 저장된 기기 인증이 있으면 바로 대시보드
 (async () => {
+  if (await checkVersion(false)) return;
   App.token = await Vault.get('tk');
   if (!App.token) return registerView();
   App.stack = [['home', {}]];
