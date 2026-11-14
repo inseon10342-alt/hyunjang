@@ -157,6 +157,7 @@ input,select,textarea,.inp,.inp.sm{font-size:16px !important}
 .calbar b,.calbar button,.seg button{white-space:nowrap}
 @media (max-width:380px){.calbar{gap:4px}.calbar b{font-size:15px;min-width:0}.ib2{min-width:32px;height:34px;padding:0 8px}.ib2.sm{font-size:12.5px}.seg button{padding:0 8px;font-size:12.5px}.kchip{padding:0 8px;font-size:13px;gap:4px}}
 .lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px;color:var(--muted)}.lg span{display:inline-flex;align-items:center;gap:6px}.lg i{width:10px;height:10px;border-radius:3px}.lg b{color:var(--ink,#0F172A)}
+.wonk>.k{min-width:0;padding:12px}.wonk .k b{font-size:clamp(14px,4.4vw,19px)!important;white-space:nowrap;letter-spacing:-.02em}
 .wtab>div{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr));gap:4px;padding:9px 0;border-bottom:1px solid #F0F3F7;align-items:center;font-size:14px}.wtab>div:last-child{border-bottom:0}
 .wtab .wh{font-size:12px;font-weight:700;color:var(--muted);padding-top:0}.wtab .wh span:not(:first-child),.wtab b{text-align:center}.wtab b{font-size:16px}.wtab b.z{color:#CBD5E1;font-weight:400}
 .wtab .cur{background:#F5F8FF;border-radius:8px;padding-left:6px;padding-right:6px}.wtab em{font-style:normal;font-size:11px;color:var(--blue);font-weight:700}
@@ -292,8 +293,8 @@ function prefetch() {
 }
 
 // ---------- 화면 틀
-const TABS = [['contracts', 'file', '계약 이력'], ['pay', 'won', '계약·입금'], ['cal', 'cal', '일정'], ['writing', 'doc', '보고서'], ['me', 'user', '내 정보']];
-const START = 'contracts';
+const TABS = [['pay', 'won', '계약·입금'], ['contracts', 'file', '계약 이력'], ['cal', 'cal', '일정'], ['writing', 'doc', '보고서'], ['me', 'user', '내 정보']];
+const START = 'pay';
 function shell(title, body, opt) {
   opt = opt || {};
   const back = App.stack.length > 1;
@@ -328,6 +329,7 @@ function isoD(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStar
 const VIEWS = {};
 const man = (n) => (n >= 1e8 ? (n / 1e8).toFixed(n >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '억' : Math.round(n / 1e4).toLocaleString('ko-KR') + '만');
 const pct = (a, b) => (b ? Math.round(a / b * 100) : 0);
+const wonF = (n) => won(n) + '<small style="font-size:13px;font-weight:600">원</small>';
 const kpi = (label, val, sub) => `<div class="k"><span>${label}</span><b class="amt" style="font-size:22px">${val}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
 const barRow = (label, n, tot, color, right) => `<div class="rk"><div class="rk1"><span class="ell grow">${esc(label)}</span><b>${right != null ? right : n + '건'}</b></div><div class="bar"><i style="width:${tot ? Math.max(n ? 2 : 0, n / tot * 100) : 0}%;background:${color}"></i></div></div>`;
 const legend = (items) => `<div class="lg">${items.map(([l, c, v]) => `<span><i style="background:${c}"></i>${esc(l)} <b>${v}</b></span>`).join('')}</div>`;
@@ -371,10 +373,10 @@ VIEWS.pay = async () => {
   const ageTot = Math.max(1, age.reduce((a, x) => a + x[3], 0));
   const done = r.pay.filter((p) => p.계약금 && p.수금 >= p.계약금).length;
   shell('계약·입금', `
-    <div class="grid2">${kpi('진행 중 계약금', man(tot), `${r.pay.length}건 · VAT 포함`)}${kpi('받은 돈', man(paid), `${pct(paid, tot)}% 수금`)}${kpi('입금 대기', man(wait), `계산서 ${inv.length}건`)}${kpi('남은 금액', man(left), `청구 전 ${man(pre)}`)}</div>
+    <div class="grid2 wonk">${kpi('진행 중 계약금', wonF(tot), `${r.pay.length}건 · VAT 포함`)}${kpi('받은 돈', wonF(paid), `${pct(paid, tot)}% 수금`)}${kpi('입금 대기', wonF(wait), `계산서 ${inv.length}건`)}${kpi('남은 금액', wonF(left), `청구 전 ${won(pre)}원`)}</div>
     <section class="card"><h2>진행 중 계약금 구성</h2><div class="bar" style="height:14px">${[[paid, '#16A34A'], [wait, '#60A5FA'], [pre, '#CBD5E1']].map(([v, c]) => (v > 0 ? `<i style="width:${v / Math.max(1, tot) * 100}%;background:${c}"></i>` : '')).join('')}</div>
       ${legend([['수금', '#16A34A', won(paid)], ['입금 대기', '#60A5FA', won(wait)], ['청구 전', '#CBD5E1', won(pre)]])}<p class="note" style="margin:8px 0 0">금액은 모두 VAT 포함 · 원</p></section>
-    <section class="card"><h2>입금 대기 경과 <span class="note">· 계산서 발행 후</span></h2>${age.map(([l, c, n, a]) => barRow(l, a, ageTot, c, `${n}건 · ${man(a)}`)).join('')}</section>
+    <section class="card"><h2>입금 대기 경과 <span class="note">· 계산서 발행 후</span></h2>${age.map(([l, c, n, a]) => barRow(l, a, ageTot, c, `${n}건 · ${won(a)}원`)).join('')}</section>
     <section class="card"><h2>진행 중 용역 수금 단계</h2>${[['다 받음', (p) => p.계약금 && p.수금 >= p.계약금, '#16A34A'], ['절반 이상', (p) => p.계약금 && p.수금 < p.계약금 && p.수금 >= p.계약금 / 2, '#60A5FA'], ['절반 미만', (p) => p.수금 > 0 && p.수금 < p.계약금 / 2, '#F59E0B'], ['아직 없음', (p) => !p.수금, '#CBD5E1']].map(([l, f, c]) => barRow(l, r.pay.filter(f).length, r.pay.length, c)).join('')}<p class="note" style="margin:6px 0 0">완납 ${done}건 / 진행 중 ${r.pay.length}건</p></section>`);
 };
 
@@ -459,7 +461,7 @@ function registerView(msg) {
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
 // ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
-const APP_VERSION = '2026-11-14a';
+const APP_VERSION = '2026-11-14b';
 async function checkVersion(manual) {
   if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
   try {
