@@ -158,6 +158,12 @@ input,select,textarea,.inp,.inp.sm{font-size:16px !important}
 @media (max-width:380px){.calbar{gap:4px}.calbar b{font-size:15px;min-width:0}.ib2{min-width:32px;height:34px;padding:0 8px}.ib2.sm{font-size:12.5px}.seg button{padding:0 8px;font-size:12.5px}.kchip{padding:0 8px;font-size:13px;gap:4px}}
 .lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px;color:var(--muted)}.lg span{display:inline-flex;align-items:center;gap:6px}.lg i{width:10px;height:10px;border-radius:3px}.lg b{color:var(--ink,#0F172A)}
 .wonk>.k{min-width:0;padding:12px}.wonk .k b{font-size:clamp(14px,4.4vw,19px)!important;white-space:nowrap;letter-spacing:-.02em}
+.hero{background:#172B4D;color:#fff;border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px}
+.hero .hl{font-size:14px;font-weight:700;color:#BFD3FB;display:flex;align-items:center;gap:6px}.hero .hl::before{content:'';width:8px;height:8px;border-radius:50%;background:#60A5FA}
+.hero .hv{font-size:clamp(26px,8.6vw,36px);font-weight:800;letter-spacing:-.02em;line-height:1.15;white-space:nowrap;font-variant-numeric:tabular-nums}.hero .hv small{font-size:16px;font-weight:700;margin-left:3px;color:#DCE5F5}
+.hero .hs{font-size:13px;color:#DCE5F5;line-height:1.5}.hero .hs b{color:#fff}
+.hero .hbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.15);margin-top:6px}.hero .hbar i{display:block;height:100%}
+.hero .hlg{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:#DCE5F5;margin-top:2px}.hero .hlg span{display:flex;align-items:center;gap:6px}.hero .hlg i{width:9px;height:9px;border-radius:3px}
 .wtab>div{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr));gap:4px;padding:9px 0;border-bottom:1px solid #F0F3F7;align-items:center;font-size:14px}.wtab>div:last-child{border-bottom:0}
 .wtab .wh{font-size:12px;font-weight:700;color:var(--muted);padding-top:0}.wtab .wh span:not(:first-child),.wtab b{text-align:center}.wtab b{font-size:16px}.wtab b.z{color:#CBD5E1;font-weight:400}
 .wtab .cur{background:#F5F8FF;border-radius:8px;padding-left:6px;padding-right:6px}.wtab em{font-style:normal;font-size:11px;color:var(--blue);font-weight:700}
@@ -324,85 +330,32 @@ async function show(refresh) {
   try { if (!V) { App.stack = [[START, {}]]; return show(); } await V(arg, refresh); prefetch(); } catch (e) { if (e.message !== 'auth') shell(arg.title || titles[name] || '', `<div class="card"><b>불러오지 못했습니다</b><p class="note">${esc(e.message || e)}</p><button class="btn" onclick="show(true)">다시 시도</button></div>`); } finally { App.forceNet = false; }
 }
 
-function isoD(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 // ---------- 화면들 (공유용: 계약 이력 · 계약·입금 · 일정 · 보고서 — 요약만)
 const VIEWS = {};
-const man = (n) => (n >= 1e8 ? (n / 1e8).toFixed(n >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '억' : Math.round(n / 1e4).toLocaleString('ko-KR') + '만');
 const pct = (a, b) => (b ? Math.round(a / b * 100) : 0);
 const wonF = (n) => won(n) + '<small style="font-size:13px;font-weight:600">원</small>';
 const kpi = (label, val, sub) => `<div class="k"><span>${label}</span><b class="amt" style="font-size:22px">${val}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
 const barRow = (label, n, tot, color, right) => `<div class="rk"><div class="rk1"><span class="ell grow">${esc(label)}</span><b>${right != null ? right : n + '건'}</b></div><div class="bar"><i style="width:${tot ? Math.max(n ? 2 : 0, n / tot * 100) : 0}%;background:${color}"></i></div></div>`;
 const legend = (items) => `<div class="lg">${items.map(([l, c, v]) => `<span><i style="background:${c}"></i>${esc(l)} <b>${v}</b></span>`).join('')}</div>`;
 
-// ① 계약 이력: 연도별 · 상태별 요약
-App.ct = { y: '전체', m: 'amt' };
-VIEWS.contracts = async () => {
-  const L = (await call('contracts')).contracts || [];
-  const years = [...new Set(L.map((c) => c.연도).filter(Boolean))].sort((a, b) => b - a);
-  if (App.ct.y !== '전체' && years.map(String).indexOf(String(App.ct.y)) < 0) App.ct.y = '전체';
-  const F = App.ct.y === '전체' ? L : L.filter((c) => String(c.연도) === String(App.ct.y));
-  const sum = (xs, k) => xs.reduce((a, c) => a + (c[k] || 0), 0), cnt = (xs, f) => xs.filter(f).length;
-  const Y = years.slice().reverse().map((y) => { const xs = L.filter((c) => c.연도 === y); return { y, n: xs.length, amt: sum(xs, '공급가'), vat: sum(xs, '계약금'), paid: sum(xs, '수금') }; });
-  const max = Math.max(1, ...Y.map((v) => (App.ct.m === 'amt' ? v.amt : v.n)));
-  const grp = (fn) => { const m = {}; F.forEach((c) => [].concat(fn(c)).forEach((k) => { m[k || '(미분류)'] = (m[k || '(미분류)'] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
-  const kinds = grp((c) => (c.종류.length ? c.종류 : ['(미분류)'])), works = grp((c) => (c.공종.length ? c.공종 : ['(미분류)'])).slice(0, 8);
-  const rep = [['제출 완료', '#16A34A'], ['일부 제출', '#F59E0B'], ['미제출', '#CBD5E1']].map(([k, c]) => [k, c, cnt(F, (x) => x.보고서 === k || (k === '미제출' && x.보고서 !== '제출 완료' && x.보고서 !== '일부 제출'))]);
-  const pay = [['입금 완료', '#16A34A'], ['부분 입금', '#60A5FA'], ['입금 대기', '#F59E0B'], ['미수금', '#B91C1C'], ['미청구', '#CBD5E1']].map(([k, c]) => [k, c, cnt(F, (x) => x.입금 === k)]);
-  const label = App.ct.y === '전체' ? '전체 연도' : App.ct.y + '년';
-  shell('계약 이력', `
-    <div class="chips" role="tablist" aria-label="계약연도">${['전체'].concat(years).map((y) => `<button class="chip ${String(App.ct.y) === String(y) ? 'on' : ''}" data-cy="${y}">${y === '전체' ? '전체' : y + '년'}</button>`).join('')}</div>
-    <div class="grid2">${kpi('계약 건수', F.length + '<small style="font-size:14px"> 건</small>', `${label} · 진행 중 ${cnt(F, (c) => c.상태 === '진행중')} · 완료 ${cnt(F, (c) => c.상태 === '완료')}`)}${kpi('계약금액 (VAT 별도)', man(sum(F, '공급가')), `VAT 포함 ${man(sum(F, '계약금'))}`)}</div>
-    <section class="card"><div class="h2r"><h2>연도별 계약</h2><div class="seg"><button data-cm2="amt" class="${App.ct.m === 'amt' ? 'on' : ''}">금액</button><button data-cm2="n" class="${App.ct.m === 'n' ? 'on' : ''}">건수</button></div></div>
-      <div class="ybars">${Y.map((v) => { const val = App.ct.m === 'amt' ? v.amt : v.n; return `<button class="yb ${String(App.ct.y) === String(v.y) ? 'on' : ''}" data-cy="${v.y}"><span class="yv">${App.ct.m === 'amt' ? man(v.amt) : v.n + '건'}</span><i style="height:${Math.max(4, val / max * 100)}%"></i><span class="yl">${v.y}</span></button>`; }).join('')}</div>
-      <div class="ytab">${Y.slice().reverse().map((v) => `<div><b>${v.y}년</b><span>${v.n}건</span><span>${man(v.amt)}</span><small>수금 ${pct(v.paid, v.vat)}%</small></div>`).join('')}</div></section>
-    <section class="card"><h2>보고서 제출 <span class="note">· ${label}</span></h2><div class="bar" style="height:12px">${rep.map(([, c, n]) => (n ? `<i style="width:${n / Math.max(1, F.length) * 100}%;background:${c}"></i>` : '')).join('')}</div>${legend(rep.map(([l, c, n]) => [l, c, n + '건']))}</section>
-    <section class="card"><h2>입금 상태 <span class="note">· ${label}</span></h2><div class="bar" style="height:12px">${pay.map(([, c, n]) => (n ? `<i style="width:${n / Math.max(1, F.length) * 100}%;background:${c}"></i>` : '')).join('')}</div>${legend(pay.filter((x) => x[2]).map(([l, c, n]) => [l, c, n + '건']))}</section>
-    <section class="card"><h2>점검 종류별 <span class="note">· 건수</span></h2>${kinds.map(([k, n]) => barRow(k, n, F.length, 'var(--blue)')).join('') || '<div class="empty">없음</div>'}</section>
-    <section class="card"><h2>공종별 <span class="note">· 상위 8</span></h2>${works.map(([k, n]) => barRow(k, n, F.length, '#60A5FA')).join('') || '<div class="empty">없음</div>'}</section>`, { bind: () => {
-    const keep = () => { const y = window.scrollY; show(); requestAnimationFrame(() => window.scrollTo(0, y)); };
-    document.querySelectorAll('[data-cy]').forEach((b) => (b.onclick = () => { App.ct.y = b.dataset.cy === '전체' ? '전체' : +b.dataset.cy; keep(); }));
-    document.querySelectorAll('[data-cm2]').forEach((b) => (b.onclick = () => { App.ct.m = b.dataset.cm2; keep(); }));
-  } });
-};
-
-// ② 계약·입금: 진행 중 용역 합계 · 입금 대기 경과
+// ② 계약·입금: 맨 위에 입금 대기 강조 → 입금 대기 계산서 → 합계 → 용역별 수금 → 최근 입금
 VIEWS.pay = async () => {
   const r = await call('pay'), sum = (k) => r.pay.reduce((a, p) => a + (p[k] || 0), 0);
   const tot = sum('계약금'), paid = sum('수금'), wait = sum('대기'), left = Math.max(0, tot - paid), pre = Math.max(0, left - wait);
-  const inv = r.invoices || [], age = [['30일 이내', (x) => x.경과 <= 30, '#60A5FA'], ['31–60일', (x) => x.경과 > 30 && x.경과 <= 60, '#F59E0B'], ['60일 넘음', (x) => x.경과 > 60, '#B91C1C']].map(([l, f, c]) => { const xs = inv.filter(f); return [l, c, xs.length, xs.reduce((a, x) => a + (x.미입금 || 0), 0)]; });
-  const ageTot = Math.max(1, age.reduce((a, x) => a + x[3], 0));
-  const done = r.pay.filter((p) => p.계약금 && p.수금 >= p.계약금).length;
+  const inv = (r.invoices || []).slice().sort((a, b) => b.경과 - a.경과), invSum = inv.reduce((a, x) => a + (x.미입금 || 0), 0);
+  const age = [['30일 이내', (x) => x.경과 <= 30, '#93C5FD'], ['31–60일', (x) => x.경과 > 30 && x.경과 <= 60, '#FBBF24'], ['60일 넘음', (x) => x.경과 > 60, '#F87171']].map(([l, f, c]) => { const xs = inv.filter(f); return [l, c, xs.length, xs.reduce((a, x) => a + (x.미입금 || 0), 0)]; });
+  const late = inv.filter((x) => x.경과 > 30);
   shell('계약·입금', `
-    <div class="grid2 wonk">${kpi('진행 중 계약금', wonF(tot), `${r.pay.length}건 · VAT 포함`)}${kpi('받은 돈', wonF(paid), `${pct(paid, tot)}% 수금`)}${kpi('입금 대기', wonF(wait), `계산서 ${inv.length}건`)}${kpi('남은 금액', wonF(left), `청구 전 ${won(pre)}원`)}</div>
+    <section class="hero"><div class="hl">입금 대기</div><div class="hv">${won(invSum || wait)}<small>원</small></div>
+      <div class="hs">계산서 <b>${inv.length}건</b>${inv.length ? ` · 가장 오래된 것 <b>${inv[0].경과}일</b>` : ''}${late.length ? ` · 30일 넘음 <b>${late.length}건 ${won(late.reduce((a, x) => a + x.미입금, 0))}원</b>` : ''}</div>
+      <div class="hbar">${age.map(([, c, , v]) => (v > 0 ? `<i style="width:${v / Math.max(1, invSum) * 100}%;background:${c}"></i>` : '')).join('')}</div>
+      <div class="hlg">${age.map(([l, c, n, v]) => `<span><i style="background:${c}"></i>${l} ${n}건 · ${won(v)}원</span>`).join('')}</div></section>
+    <section class="card"><h2>입금 대기 계산서 <span class="note">· 발행 후 오래된 순 · VAT 포함</span></h2>${inv.map((x) => `<div class="row"><span class="pill ${x.경과 > 60 ? 'p-bad' : x.경과 > 30 ? 'p-warn' : 'p-mute'}">${x.경과}일</span><div class="grow"><div class="t ell">${esc(x.용역)}</div><div class="s">${esc(x.품명)} · ${ymd(x.발행일)} 발행</div></div><span class="amt">${won(x.미입금)}원</span></div>`).join('') || '<div class="empty">입금 대기 계산서가 없습니다</div>'}</section>
+    <div class="grid2 wonk">${kpi('진행 중 계약금', wonF(tot), `${r.pay.length}건 · VAT 포함`)}${kpi('받은 돈', wonF(paid), `${pct(paid, tot)}% 수금`)}${kpi('남은 금액', wonF(left), `청구 전 ${won(pre)}원`)}${kpi('미수금', r.unpaid ? wonF(r.unpaid) : '없음', '못 받은 돈')}</div>
     <section class="card"><h2>진행 중 계약금 구성</h2><div class="bar" style="height:14px">${[[paid, '#16A34A'], [wait, '#60A5FA'], [pre, '#CBD5E1']].map(([v, c]) => (v > 0 ? `<i style="width:${v / Math.max(1, tot) * 100}%;background:${c}"></i>` : '')).join('')}</div>
-      ${legend([['수금', '#16A34A', won(paid)], ['입금 대기', '#60A5FA', won(wait)], ['청구 전', '#CBD5E1', won(pre)]])}<p class="note" style="margin:8px 0 0">금액은 모두 VAT 포함 · 원</p></section>
-    <section class="card"><h2>입금 대기 경과 <span class="note">· 계산서 발행 후</span></h2>${age.map(([l, c, n, a]) => barRow(l, a, ageTot, c, `${n}건 · ${won(a)}원`)).join('')}</section>
-    <section class="card"><h2>진행 중 용역 수금 단계</h2>${[['다 받음', (p) => p.계약금 && p.수금 >= p.계약금, '#16A34A'], ['절반 이상', (p) => p.계약금 && p.수금 < p.계약금 && p.수금 >= p.계약금 / 2, '#60A5FA'], ['절반 미만', (p) => p.수금 > 0 && p.수금 < p.계약금 / 2, '#F59E0B'], ['아직 없음', (p) => !p.수금, '#CBD5E1']].map(([l, f, c]) => barRow(l, r.pay.filter(f).length, r.pay.length, c)).join('')}<p class="note" style="margin:6px 0 0">완납 ${done}건 / 진행 중 ${r.pay.length}건</p></section>`);
-};
-
-// ③ 일정: 달별 · 주별 건수
-VIEWS.cal = async () => {
-  const t = new Date(), today = isoD(t);
-  if (!App.calYM) App.calYM = [t.getFullYear(), t.getMonth()];
-  const [y, m] = App.calYM, ym = `${y}-${String(m + 1).padStart(2, '0')}`;
-  const ev = ((await call('schedule', calRange(y, m))).events || []);
-  const K = [['점검', '#172B4D'], ['예정', '#F59E0B'], ['기한', '#B91C1C'], ['연락', '#2563EB']], KL = { 점검: '점검', 예정: '점검 예정', 기한: '보고서 기한', 연락: '현장 연락' };
-  const inM = ev.filter((e) => e.d.slice(0, 7) === ym);
-  const n = (xs, k) => xs.filter((e) => e.k === k).length;
-  // 그 달을 덮는 주(월~일)
-  const first = new Date(y, m, 1), wk0 = new Date(y, m, 1 - ((first.getDay() + 6) % 7)), weeks = [];
-  for (let s = new Date(wk0); s.getMonth() <= m && s.getFullYear() <= y || weeks.length === 0; s.setDate(s.getDate() + 7)) { const a = isoD(s), e = new Date(s); e.setDate(e.getDate() + 6); weeks.push([a, isoD(e)]); if (weeks.length > 6) break; if (e.getMonth() !== m && e > new Date(y, m, 1)) break; }
-  const next7 = Array.from({ length: 7 }, (_, i) => { const d = new Date(t); d.setDate(t.getDate() + i); return isoD(d); });
-  const evNear = (y === t.getFullYear() && m === t.getMonth()) ? ev : null;
-  shell('점검 일정', `<div class="calbar"><button class="ib2" id="pm" aria-label="이전 달">‹</button><b>${y}년 ${m + 1}월</b><button class="ib2" id="nm" aria-label="다음 달">›</button><span class="grow"></span><button class="ib2 sm" id="tm">이번 달</button></div>
-    <div class="grid2">${K.map(([k, c]) => `<div class="k" style="border-left:4px solid ${c}"><span>${KL[k]}</span><b>${n(inM, k)}<small style="font-size:14px"> 건</small></b><small>${k === '점검' || k === '예정' ? `완료 ${inM.filter((e) => e.k === k && e.done).length}` : '&nbsp;'}</small></div>`).join('')}</div>
-    <section class="card"><h2>주별 일정 <span class="note">· 건수</span></h2><div class="wtab"><div class="wh"><span>주</span>${K.map(([k, c]) => `<span style="color:${c}">${k}</span>`).join('')}</div>
-      ${weeks.map(([a, b]) => { const xs = ev.filter((e) => e.d >= a && e.d <= b && e.d.slice(0, 7) === ym); const cur = today >= a && today <= b; return `<div class="${cur ? 'cur' : ''}"><span>${md(a)}–${md(b)}${cur ? ' <em>이번 주</em>' : ''}</span>${K.map(([k]) => `<b class="${n(xs, k) ? '' : 'z'}">${n(xs, k) || '·'}</b>`).join('')}</div>`; }).join('')}</div></section>
-    ${evNear ? `<section class="card"><h2>앞으로 7일</h2>${next7.map((d) => { const xs = ev.filter((e) => e.d === d && !e.done); return `<div class="drow ${d === today ? 'today' : ''}"><span>${md(d)} <small>${'일월화수목금토'[new Date(d + 'T00:00:00').getDay()]}${d === today ? ' · 오늘' : ''}</small></span><span class="grow">${K.filter(([k]) => n(xs, k)).map(([k, c]) => `<span class="pill" style="background:${c}1a;color:${c}">${k} ${n(xs, k)}</span>`).join(' ') || '<span class="note">없음</span>'}</span></div>`; }).join('')}</section>` : ''}
-    <p class="note" style="margin:0 2px">점검 = 점검한 날 · 점검 예정 = 예정일 · 보고서 기한 = 제출 기한 · 현장 연락 = 다음 연락 예정일</p>`, { bind: () => {
-    const mv = (k) => { const d = new Date(y, m + k, 1); App.calYM = [d.getFullYear(), d.getMonth()]; show(); };
-    $('#pm').onclick = () => mv(-1); $('#nm').onclick = () => mv(1); $('#tm').onclick = () => { App.calYM = null; show(); };
-  } });
+      ${legend([['수금', '#16A34A', won(paid) + '원'], ['입금 대기', '#60A5FA', won(wait) + '원'], ['청구 전', '#CBD5E1', won(pre) + '원']])}</section>
+    <section class="card"><h2>용역별 수금 <span class="note">· 입금 대기 많은 순 · VAT 포함</span></h2>${r.pay.slice().sort((a, b) => b.대기 - a.대기 || b.계약금 - a.계약금).map((p) => `<div class="row" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;gap:8px"><span class="t ell grow">${esc(p.용역)}</span><b>${Math.round((p.기성율 || 0) * 100)}%</b></div><div class="bar"><i style="width:${Math.min(p.수금, p.계약금) / Math.max(1, p.계약금) * 100}%;background:#16A34A"></i><i style="width:${Math.min(p.대기, p.계약금) / Math.max(1, p.계약금) * 100}%;background:#60A5FA"></i></div><div class="s">수금 ${won(p.수금)}원 · 대기 ${won(p.대기)}원 / 계약 ${won(p.계약금)}원</div></div>`).join('')}</section>
+    <section class="card"><h2>최근 입금</h2>${(r.paidRecent || []).map((x) => `<div class="row"><div class="grow"><div class="t ell">${esc(x.용역)}</div><div class="s">${ymd(x.입금일)} · ${esc(x.품명)}</div></div><span class="amt">${won(x.수금 || x.청구)}원</span></div>`).join('') || '<div class="empty">없음</div>'}</section>`);
 };
 
 // ④ 보고서: 작성 중 기한 구간 · 점검 단계
@@ -418,6 +371,248 @@ VIEWS.writing = async () => {
       <div class="grid2" style="margin-top:12px"><div class="box"><span>이번 주 제출</span><b>${wk(0, 6 - ((new Date().getDay() + 6) % 7))}건</b></div><div class="box"><span>다음 주 제출</span><b>${wk(7 - ((new Date().getDay() + 6) % 7), 13 - ((new Date().getDay() + 6) % 7))}건</b></div></div></section>
     <section class="card"><h2>진행 중 현장의 점검 단계</h2><div class="bar" style="height:14px">${SEG.map(([k, c]) => (st[k] ? `<i style="width:${st[k] / stT * 100}%;background:${c}"></i>` : '')).join('')}</div>${legend(SEG.map(([k, c]) => [k === '보고서 작성중' ? '작성 중' : k, c, (st[k] || 0) + '건']))}</section>`);
 };
+
+// ③ 일정 (달력 · 목록 — 예전 그대로)
+// 일정: 달력 / 목록 전환, 한 달씩 받아 온다. 완료된 점검·끝난 용역은 회색
+App.calMode = (() => { try { return localStorage.getItem('calMode') || 'month'; } catch (e) { return 'month'; } })();
+App.calKinds = (() => { try { const v = JSON.parse(localStorage.getItem('calKinds') || 'null'); return Array.isArray(v) && v.length ? v : ['점검']; } catch (e) { return ['점검']; } })();
+VIEWS.cal = async () => {
+  const t = new Date(), today = isoD(t);
+  if (!App.calYM) App.calYM = [t.getFullYear(), t.getMonth()];
+  if (!App.calSel) App.calSel = today;
+  const [y, m] = App.calYM;
+  const evAll = (await call('schedule', calRange(y, m))).events;
+  const ev = evAll.filter((e) => App.calKinds.indexOf(e.k) >= 0);
+  const groups = {}; ev.forEach((e) => { (groups[e.d] = groups[e.d] || []).push(e); });
+  const kc = { 점검: 'p-navy', 예정: 'p-warn', 기한: 'p-bad', 연락: 'p-info' }, kcol = { 점검: '#172B4D', 예정: '#F59E0B', 기한: '#B91C1C', 연락: '#2563EB' }, kbg = { 점검: '#DCE5F5', 예정: '#FEF0D9', 기한: '#FBE1E1', 연락: '#E3ECFE' };
+  const row = (e) => `<${e.closed ? 'div' : 'button'} class="row ${e.closed ? '' : 'tap'} ${e.done ? 'done' : ''}" ${e.closed ? '' : `data-x="${esc(e.s)}"`}><span class="pill ${e.done ? 'p-mute' : kc[e.k]}">${e.k}</span><div class="grow"><div class="t ell">${esc(e.s)}</div><div class="s">${esc(e.t)}${e.done ? (e.closed ? ' · 용역 종료' : ' · 완료') : ''}</div></div></${e.closed ? 'div' : 'button'}>`;
+  const dayList = (d) => `<div class="dhead">${ymd(d)} <span class="note">${'일월화수목금토'[new Date(d + 'T00:00:00').getDay()]} · ${relD(d, today)}</span></div>${(groups[d] || []).map(row).join('') || '<div class="empty">일정 없음</div>'}`;
+  const head = `<div class="calbar"><button class="ib2" id="pm" aria-label="이전 달">‹</button><b>${y}년 ${m + 1}월</b><button class="ib2" id="nm" aria-label="다음 달">›</button>
+    <span class="grow"></span><button class="ib2 sm" id="tm">오늘</button><div class="seg"><button data-cm="month" class="${App.calMode === 'month' ? 'on' : ''}">달력</button><button data-cm="list" class="${App.calMode === 'list' ? 'on' : ''}">목록</button></div></div>
+    <div class="kf" role="group" aria-label="표시할 항목 (여러 개 선택 가능)">${Object.entries(kcol).map(([k, c]) => { const on = App.calKinds.indexOf(k) >= 0, n = evAll.filter((e) => e.k === k && e.d.slice(0, 7) === `${y}-${String(m + 1).padStart(2, '0')}`).length; return `<button class="kchip ${on ? 'on' : ''}" data-kf="${k}" aria-pressed="${on}" style="--c:${c}"><i></i>${k}<span>${n}</span></button>`; }).join('')}</div>`;
+  let body;
+  if (App.calMode === 'month') {
+    const first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay()), cells = [];
+    for (let i = 0; i < 42; i++) { const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i); cells.push(d); if (i >= 34 && d.getMonth() !== m && i % 7 === 6) break; }
+    body = `<section class="card cal"><div class="cgrid">${'일월화수목금토'.split('').map((w, i) => `<div class="wd ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('')}
+      ${cells.map((d) => { const k = isoD(d), es = groups[k] || [], out = d.getMonth() !== m; return `<button class="cd ${out ? 'out' : ''} ${k === today ? 'today' : ''} ${k === App.calSel ? 'sel' : ''} ${d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''}" data-day="${k}"><span class="n">${d.getDate()}</span>
+        ${es.slice(0, 3).map((e) => `<span class="ev ${e.done ? 'done' : ''}" style="${e.done ? '' : `--c:${kcol[e.k]};--b:${kbg[e.k]}`}">${esc(short(e.s))}</span>`).join('')}${es.length > 3 ? `<span class="more">+${es.length - 3}</span>` : ''}</button>`; }).join('')}</div></section>
+      <p class="note" style="margin:-4px 2px 0">점검 = 점검일 · 예정 = 점검 예정일 · 기한 = 보고서 제출 기한 · 연락 = 다음 현장 연락 · 회색 = 완료·종료</p>
+      <section class="card">${dayList(App.calSel)}</section>`;
+  } else {
+    body = `<section class="card">${Object.keys(groups).filter((d) => d.startsWith(`${y}-${String(m + 1).padStart(2, '0')}`)).sort().map(dayList).join('') || '<div class="empty">이 달에는 일정이 없습니다</div>'}</section>`;
+  }
+  shell('점검 일정', head + body, { bind: () => {
+    bindCommon();
+    const mv = (n) => { const d = new Date(y, m + n, 1); App.calYM = [d.getFullYear(), d.getMonth()]; App.calSel = isoD(d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear() ? t : d); show(); };
+    $('#pm').onclick = () => mv(-1); $('#nm').onclick = () => mv(1);
+    $('#tm').onclick = () => { App.calYM = null; App.calSel = null; show(); };
+    document.querySelectorAll('[data-kf]').forEach((b) => (b.onclick = () => {
+      const k = b.dataset.kf, i = App.calKinds.indexOf(k);
+      if (i >= 0) { if (App.calKinds.length > 1) App.calKinds.splice(i, 1); } else App.calKinds.push(k);
+      try { localStorage.setItem('calKinds', JSON.stringify(App.calKinds)); } catch (e) {}
+      show();
+    }));
+    document.querySelectorAll('[data-cm]').forEach((b) => (b.onclick = () => { App.calMode = b.dataset.cm; try { localStorage.setItem('calMode', App.calMode); } catch (e) {} show(); }));
+    document.querySelectorAll('[data-day]').forEach((b) => (b.onclick = () => { App.calSel = b.dataset.day; const o = new Date(b.dataset.day + 'T00:00:00'); if (o.getMonth() !== m) App.calYM = [o.getFullYear(), o.getMonth()]; show(); }));
+  } });
+};
+function isoD(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function relD(d, today) { const dd = Math.round((new Date(d + 'T00:00:00') - new Date(today + 'T00:00:00')) / 864e5); return dd === 0 ? '오늘' : dd > 0 ? dd + '일 후' : -dd + '일 전'; }
+function short(n) { return String(n).replace(/\s*(신축공사|신축|공사|해체공사|복합시설|근린생활시설|재건축정비사업)\s*/g, ' ').trim().split(/[\s,]+/)[0]; }
+
+// ===================== 계약 이력 (2023년~ 전체 · 조회 전용) =====================
+// 원본은 통합관리 엑셀 용역대장(끝난 용역 포함). 연도는 데이터에서 자동으로 만든다(고정값 없음).
+App.ct = { y: '전체', q: {}, m: 'amt', adv: false, dl: false };
+const CT_COLS = [['연도', '계약연도'], ['현장명', '현장명'], ['발주처', '발주처(계약자)'], ['시공사', '시공사'], ['종류', '점검종류'], ['공종', '공종'], ['계약일', '계약일'], ['기간', '용역기간'],
+  ['공급가', '계약금액(VAT 별도)'], ['계약금', '계약금액(VAT 포함)'], ['상태', '계약상태'], ['보고서', '보고서 제출'], ['입금', '입금 상태']];
+const norm = (s) => String(s || '').replace(/\s/g, '').toLowerCase();
+const man = (n) => (n >= 1e8 ? (n / 1e8).toFixed(n >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '억' : Math.round(n / 1e4).toLocaleString('ko-KR') + '만');
+const ctState = (s) => (s === '진행중' ? 'p-info' : s === '완료' ? 'p-ok' : /취소/.test(s) ? 'p-bad' : 'p-mute');
+const ctPay = (s) => (s === '입금 완료' ? 'p-ok' : s === '미수금' ? 'p-bad' : s === '입금 대기' || s === '부분 입금' ? 'p-warn' : 'p-mute');
+const ctRep = (s) => (s === '제출 완료' ? 'p-ok' : s === '일부 제출' ? 'p-warn' : 'p-mute');
+const period = (c) => (c.기간[0] || c.기간[1] ? `${ymd(c.기간[0]) || '?'} ~ ${c.기간[1] ? ymd(c.기간[1]) : (c.상태 === '진행중' ? '진행 중' : '?')}` : '-');
+function ctFilter(L, skipYear) {
+  const q = App.ct.q, y = App.ct.y;
+  const has = (v, k) => !q[k] || norm(v).indexOf(norm(q[k])) >= 0;
+  return L.filter((c) => (skipYear || y === '전체' || String(c.연도) === String(y))
+    && (!q.all || [c.현장명, c.발주처, c.시공사, c.공종.join(' '), c.관할구].some((v) => norm(v).indexOf(norm(q.all)) >= 0))
+    && has(c.현장명, 'name') && has(c.발주처, 'payer') && has(c.시공사, 'builder')
+    && (!q.kind || c.종류.indexOf(q.kind) >= 0) && (!q.work || c.공종.indexOf(q.work) >= 0)
+    && (!q.state || c.상태 === q.state) && (!q.pay || c.입금 === q.pay)
+    && (!q.from || (c.계약일 || c.기간[0] || '') >= q.from) && (!q.to || ((c.계약일 || c.기간[0] || '') && (c.계약일 || c.기간[0]) <= q.to))
+    && (!q.min || c.공급가 >= q.min * 1e4) && (!q.max || c.공급가 <= q.max * 1e4));
+}
+function ctStats(L) {
+  const sum = (xs, k) => xs.reduce((a, c) => a + (c[k] || 0), 0);
+  const years = {}; L.forEach((c) => { const y = c.연도 || '미정'; (years[y] = years[y] || { n: 0, amt: 0, vat: 0 }); years[y].n++; years[y].amt += c.공급가; years[y].vat += c.계약금; });
+  const grp = (keyFn) => { const m = {}; L.forEach((c) => [].concat(keyFn(c)).forEach((k) => { k = k || '(미입력)'; (m[k] = m[k] || { n: 0, amt: 0, vat: 0 }); m[k].n++; m[k].amt += c.공급가; m[k].vat += c.계약금; })); return Object.entries(m).sort((a, b) => b[1].amt - a[1].amt); };
+  const st = {}; L.forEach((c) => { st[c.상태] = (st[c.상태] || 0) + 1; });
+  return { n: L.length, amt: sum(L, '공급가'), vat: sum(L, '계약금'), paid: sum(L, '수금'), years: Object.entries(years).sort((a, b) => String(b[0]).localeCompare(String(a[0]))), st, payers: grp((c) => c.발주처), kinds: grp((c) => (c.종류.length ? c.종류 : ['(미분류)'])) };
+}
+function ctBars(S, sel) {
+  const m = App.ct.m, max = Math.max(1, ...S.years.map(([, v]) => (m === 'amt' ? v.amt : v.n)));
+  return `<div class="ybars">${S.years.slice().reverse().map(([y, v]) => { const val = m === 'amt' ? v.amt : v.n; return `<button class="yb ${String(sel) === String(y) ? 'on' : ''}" data-cy="${esc(y)}" aria-label="${esc(y)}년 ${v.n}건 ${won(v.amt)}원"><span class="yv">${m === 'amt' ? man(v.amt) : v.n + '건'}</span><i style="height:${Math.max(4, val / max * 100)}%"></i><span class="yl">${esc(y)}</span></button>`; }).join('')}</div>`;
+}
+function ctRank(rows, total) {
+  return rows.slice(0, 6).map(([k, v]) => `<div class="rk"><div class="rk1"><span class="ell grow">${esc(k)}</span><b>${man(v.amt)}</b><small>${v.n}건</small></div><div class="bar"><i style="width:${total ? v.amt / total * 100 : 0}%;background:var(--blue)"></i></div></div>`).join('') || '<div class="empty">없음</div>';
+}
+VIEWS.contracts = async () => {
+  const L = (await call('contracts')).contracts || [];
+  const yearsAll = [...new Set(L.map((c) => c.연도).filter(Boolean))].sort((a, b) => b - a);
+  if (App.ct.y !== '전체' && yearsAll.map(String).indexOf(String(App.ct.y)) < 0) App.ct.y = '전체';
+  const q = App.ct.q, F = ctFilter(L), S = ctStats(F), SY = ctStats(ctFilter(L, true));
+  const opts = (arr, v) => ['<option value="">전체</option>'].concat(arr.map((x) => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`)).join('');
+  const uniq = (fn) => [...new Set(L.flatMap(fn))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'ko'));
+  const advN = ['name', 'payer', 'builder', 'kind', 'work', 'state', 'pay', 'from', 'to', 'min', 'max'].filter((k) => q[k]).length;
+  const yLabel = App.ct.y === '전체' ? '전체 연도' : App.ct.y + '년';
+  const body = `<div class="ctw">
+    <div class="chips" role="tablist" aria-label="계약연도">${['전체'].concat(yearsAll).map((y) => `<button class="chip ${String(App.ct.y) === String(y) ? 'on' : ''}" data-cy="${y}">${y === '전체' ? '전체' : y + '년'}</button>`).join('')}</div>
+    <section class="card"><h2>${yLabel} 계약 실적 <span class="note">· 금액은 VAT 별도 기준</span></h2>
+      <div class="grid4"><div class="box"><span>계약 건수</span><b>${S.n}건</b></div><div class="box"><span>계약금액 (VAT 별도)</span><b>${won(S.amt)}</b></div>
+        <div class="box"><span>진행 중 / 완료</span><b>${S.st['진행중'] || 0} / ${S.st['완료'] || 0}</b>${Object.keys(S.st).filter((k) => k !== '진행중' && k !== '완료').map((k) => `<small>${esc(k)} ${S.st[k]}</small>`).join(' ')}</div>
+        <div class="box"><span>VAT 포함</span><b>${won(S.vat)}</b><small>수금 ${won(S.paid)}</small></div></div></section>
+    <div class="ctg">
+    <section class="card"><div class="h2r"><h2>연도별 계약</h2><div class="seg"><button data-cm2="amt" class="${App.ct.m === 'amt' ? 'on' : ''}">금액</button><button data-cm2="n" class="${App.ct.m === 'n' ? 'on' : ''}">건수</button></div></div>
+      ${ctBars(SY, App.ct.y)}
+      <div class="ytab">${SY.years.map(([y, v]) => `<div><b>${esc(y)}년</b><span>${v.n}건</span><span>${won(v.amt)}</span><small>VAT 포함 ${won(v.vat)}</small></div>`).join('')}</div></section>
+    <section class="card"><h2>발주처(계약자)별 실적 <span class="note">상위 6 · VAT 별도</span></h2>${ctRank(S.payers, S.amt)}</section>
+    </div>
+    <div class="search">${ic('search', 20)}<input id="cq" type="search" placeholder="현장명·발주처·시공사·공종 검색" value="${esc(q.all || '')}" aria-label="계약 검색"></div>
+    <div class="ctbar"><button class="btn sm" id="adv" aria-expanded="${App.ct.adv}">상세 검색${advN ? ` <span class="pill p-info" style="height:20px;margin-left:4px">${advN}</span>` : ''}</button>
+      ${advN || q.all || App.ct.y !== '전체' ? '<button class="btn sm" id="rst">조건 초기화</button>' : ''}<span class="grow"></span><button class="btn sm" id="dlb" aria-expanded="${App.ct.dl}">${ic('down', 18)} 엑셀</button></div>
+    ${App.ct.dl ? `<section class="card dl"><h2>엑셀 다운로드</h2>
+      <button class="row tap" data-dl="result"><div class="grow"><div class="t">검색 결과</div><div class="s">지금 조건의 ${F.length}건</div></div>${ic('down', 18)}</button>
+      <button class="row tap" data-dl="all"><div class="grow"><div class="t">전체 계약 목록</div><div class="s">${L.length}건 · 연도별 시트 포함</div></div>${ic('down', 18)}</button>
+      ${yearsAll.map((y) => `<button class="row tap" data-dl="y${y}"><div class="grow"><div class="t">${y}년 계약 목록</div><div class="s">${L.filter((c) => c.연도 === y).length}건</div></div>${ic('down', 18)}</button>`).join('')}
+      <button class="row tap" data-dl="stats"><div class="grow"><div class="t">연도별 계약 통계</div><div class="s">연도별 · 상태별 · 발주처별</div></div>${ic('down', 18)}</button>
+      <p class="note" id="dlmsg" style="margin:6px 0 0">엑셀 파일(.xlsx)로 받습니다. 원본 데이터는 바뀌지 않습니다.</p></section>` : ''}
+    ${App.ct.adv ? `<section class="card adv"><div class="fgrid">
+      <label>현장명<input class="inp sm" data-f="name" value="${esc(q.name || '')}"></label><label>발주처<input class="inp sm" data-f="payer" value="${esc(q.payer || '')}"></label>
+      <label>시공사<input class="inp sm" data-f="builder" value="${esc(q.builder || '')}"></label>
+      <label>점검종류<select class="inp sm" data-f="kind">${opts(uniq((c) => c.종류), q.kind)}</select></label>
+      <label>공종<select class="inp sm" data-f="work">${opts(uniq((c) => c.공종), q.work)}</select></label>
+      <label>계약상태<select class="inp sm" data-f="state">${opts(uniq((c) => [c.상태]), q.state)}</select></label>
+      <label>입금 상태<select class="inp sm" data-f="pay">${opts(uniq((c) => [c.입금]), q.pay)}</select></label>
+      <label>계약일 부터<input class="inp sm" type="date" data-f="from" value="${esc(q.from || '')}"></label><label>계약일 까지<input class="inp sm" type="date" data-f="to" value="${esc(q.to || '')}"></label>
+      <label>금액 최소 (만원, VAT 별도)<input class="inp sm" type="number" inputmode="numeric" min="0" data-f="min" value="${esc(q.min || '')}"></label><label>금액 최대 (만원)<input class="inp sm" type="number" inputmode="numeric" min="0" data-f="max" value="${esc(q.max || '')}"></label>
+      </div><p class="note" style="margin:8px 0 0">계약일이 비어 있는 과거 계약은 첫 점검일을 기준으로 찾습니다. 조건은 모두 함께 적용됩니다.</p></section>` : ''}
+    <div class="note" style="padding:0 2px">${F.length}건 · 최신 연도순</div>
+    <div class="ctcards">${F.map((c) => `<button class="site tap" data-ct="${esc(c.id)}">
+        <div style="display:flex;gap:8px;align-items:flex-start"><div class="grow"><div class="t" style="font-weight:800;font-size:16px;line-height:1.35">${esc(c.현장명)}</div><div class="s note">${c.연도 || '-'}년 · ${esc(c.발주처 || '-')}${c.시공사 && c.시공사 !== c.발주처 ? ' · 시공 ' + esc(c.시공사) : ''}</div></div><span class="pill ${ctState(c.상태)}">${esc(c.상태)}</span></div>
+        <div>${c.종류.map((k) => `<span class="tag">${esc(k)}</span>`).join('')}${c.공종.map((k) => `<span class="tag">${esc(k)}</span>`).join('')}</div>
+        <div class="mini"><div><span class="note">계약금액 (VAT 별도)</span><div style="font-weight:800">${won(c.공급가)}</div><small class="note">VAT 포함 ${won(c.계약금)}</small></div><div><span class="note">계약일 · 기간</span><div style="font-size:13.5px">${ymd(c.계약일) || '-'}</div><small class="note">${period(c)}</small></div></div>
+        <div><span class="pill ${ctRep(c.보고서)}">보고서 ${esc(c.보고서)}${c.점검 && c.보고서 !== '제출 완료' ? ` ${c.제출}/${c.점검}` : ''}</span> <span class="pill ${ctPay(c.입금)}">${esc(c.입금)}</span></div></button>`).join('') || '<div class="card empty">조건에 맞는 계약이 없습니다</div>'}</div>
+    <div class="cttable card"><table><thead><tr>${CT_COLS.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>${F.map((c) => `<tr>
+      <td>${c.연도 || '-'}</td><td><button class="lnk" data-ct="${esc(c.id)}">${esc(c.현장명)}</button></td><td>${esc(c.발주처)}</td><td>${esc(c.시공사)}</td><td>${esc(c.종류.join(', '))}</td><td>${esc(c.공종.join(', '))}</td>
+      <td>${ymd(c.계약일) || '-'}</td><td>${period(c)}</td><td class="num">${won(c.공급가)}</td><td class="num">${won(c.계약금)}</td><td><span class="pill ${ctState(c.상태)}">${esc(c.상태)}</span></td>
+      <td><span class="pill ${ctRep(c.보고서)}">${esc(c.보고서)}</span></td><td><span class="pill ${ctPay(c.입금)}">${esc(c.입금)}</span></td></tr>`).join('')}</tbody></table></div>
+  </div>`;
+  shell('계약 이력', body, { bind: () => {
+    bindCommon();
+    const keep = () => { const y = window.scrollY; show(); requestAnimationFrame(() => window.scrollTo(0, y)); };
+    document.querySelectorAll('[data-cy]').forEach((b) => (b.onclick = () => { App.ct.y = b.dataset.cy === '전체' ? '전체' : +b.dataset.cy || b.dataset.cy; keep(); }));
+    document.querySelectorAll('[data-cm2]').forEach((b) => (b.onclick = () => { App.ct.m = b.dataset.cm2; keep(); }));
+    document.querySelectorAll('[data-ct]').forEach((b) => (b.onclick = () => { const c = L.find((x) => x.id === b.dataset.ct); go('contract', { id: b.dataset.ct, title: c ? c.현장명 : '계약 상세' }); }));
+    $('#adv').onclick = () => { App.ct.adv = !App.ct.adv; keep(); };
+    $('#dlb').onclick = () => { App.ct.dl = !App.ct.dl; keep(); };
+    if ($('#rst')) $('#rst').onclick = () => { App.ct.q = {}; App.ct.y = '전체'; keep(); };
+    let tm; $('#cq').oninput = (e) => { clearTimeout(tm); tm = setTimeout(() => { App.ct.q.all = e.target.value; const pos = e.target.selectionStart; keep(); requestAnimationFrame(() => { const i = $('#cq'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (er) {} } }); }, 350); };
+    document.querySelectorAll('[data-f]').forEach((el) => (el.onchange = () => { const v = el.value.trim(); App.ct.q[el.dataset.f] = el.type === 'number' ? (v ? +v : '') : v; keep(); }));
+    document.querySelectorAll('[data-dl]').forEach((b) => (b.onclick = () => ctDownload(b.dataset.dl, L, F)));
+  } });
+};
+function ctRow(c) { return [c.연도 || '', c.현장명, c.발주처, c.시공사, c.종류.join(', '), c.공종.join(', '), c.계약일, period(c), c.공급가, c.계약금, c.상태, c.보고서, c.입금, c.수금, c.대기, c.잔여, c.id]; }
+const CT_HEAD = CT_COLS.map(([, l]) => l).concat(['수금 합계', '청구 후 입금 대기', '잔여금', '계약 ID']);
+let xlsxP = null;
+function loadXlsx() { return xlsxP || (xlsxP = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = () => (window.XLSX ? res(window.XLSX) : rej(new Error('xlsx'))); s.onerror = () => { xlsxP = null; rej(new Error('엑셀 모듈을 불러오지 못했습니다')); }; document.head.appendChild(s); })); }
+async function ctDownload(kind, L, F) {
+  const msg = $('#dlmsg'); if (msg) msg.textContent = '파일을 만드는 중…';
+  const stamp = isoD(new Date());
+  const sheets = [];
+  const listSheet = (name, xs) => sheets.push([name, [CT_HEAD].concat(xs.map(ctRow))]);
+  let fname;
+  if (kind === 'result') { listSheet('검색 결과', F); fname = `계약이력_검색결과_${stamp}`; }
+  else if (kind === 'all') { listSheet('전체', L); [...new Set(L.map((c) => c.연도).filter(Boolean))].sort((a, b) => b - a).forEach((y) => listSheet(y + '년', L.filter((c) => c.연도 === y))); fname = `계약이력_전체_${stamp}`; }
+  else if (kind[0] === 'y') { const y = +kind.slice(1); listSheet(y + '년', L.filter((c) => c.연도 === y)); fname = `계약이력_${y}년_${stamp}`; }
+  else {
+    const S = ctStats(L), tot = ['합계', S.n, S.amt, S.vat, S.paid];
+    sheets.push(['연도별', [['계약연도', '계약 건수', '계약금액(VAT 별도)', '계약금액(VAT 포함)', '수금 합계']].concat(S.years.map(([y]) => { const xs = L.filter((c) => String(c.연도 || '미정') === String(y)); return [y, xs.length, xs.reduce((a, c) => a + c.공급가, 0), xs.reduce((a, c) => a + c.계약금, 0), xs.reduce((a, c) => a + c.수금, 0)]; }), [tot])]);
+    sheets.push(['상태별', [['계약상태', '건수']].concat(Object.entries(S.st))]);
+    sheets.push(['발주처별', [['발주처(계약자)', '건수', '계약금액(VAT 별도)', '계약금액(VAT 포함)']].concat(S.payers.map(([k, v]) => [k, v.n, v.amt, v.vat]))]);
+    fname = `계약통계_${stamp}`;
+  }
+  try {
+    const X = await loadXlsx(), wb = X.utils.book_new();
+    sheets.forEach(([n, rows]) => { const ws = X.utils.aoa_to_sheet(rows); ws['!cols'] = rows[0].map((h, i) => ({ wch: i === 1 ? 34 : Math.max(10, String(h).length * 2) })); X.utils.book_append_sheet(wb, ws, n.slice(0, 31)); });
+    X.writeFile(wb, fname + '.xlsx');
+    if (msg) msg.textContent = '다운로드했습니다: ' + fname + '.xlsx';
+  } catch (e) {
+    // 엑셀 모듈을 못 불러오면 엑셀에서 열리는 CSV 로 대신 받는다
+    const csv = '﻿' + sheets[0][1].map((r) => r.map((v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = fname + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+    if (msg) msg.textContent = 'CSV 로 받았습니다(엑셀에서 열림): ' + fname + '.csv';
+  }
+}
+VIEWS.contract = async (arg) => {
+  const c = (await call('contract', { id: arg.id })).contract;
+  if (!c) return shell('계약 상세', '<div class="card empty">계약을 찾지 못했습니다. 새로고침해 보세요.</div>', { bind: bindCommon });
+  const kv = (rows) => `<dl class="kv">${rows.filter(([, v]) => v !== '' && v != null && v !== '-').map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  const ev = [];
+  (c.점검목록 || []).forEach((x) => { if (x.점검일) ev.push([x.점검일, '점검', x.항목, 'var(--navy)']); if (x.발송일) ev.push([x.발송일, '보고서 발송', x.항목, 'var(--ok)']); });
+  (c.계산서 || []).forEach((x) => { ev.push([x.발행일, '계산서 발행', `${x.품명 || ''} · ${won(x.청구)}원`, 'var(--warn)']); if (x.입금일) ev.push([x.입금일, '입금', `${won(x.수금 || x.청구)}원`, 'var(--blue)']); });
+  (c.연락 || []).forEach((x) => ev.push([x.연락일, '현장 연락', [x.방법, x.담당자, x.공정].filter(Boolean).join(' · '), '#7C3AED']));
+  ev.sort((a, b) => String(b[0]).localeCompare(String(a[0])));
+  shell(c.현장명, `
+    <section class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill ${ctState(c.상태)}">${esc(c.상태)}</span><span class="pill ${ctRep(c.보고서)}">보고서 ${esc(c.보고서)}</span><span class="pill ${ctPay(c.입금)}">${esc(c.입금)}</span></div>
+      <h2 style="margin:10px 0 2px;font-size:18px">${esc(c.현장명)}</h2><div class="note">${c.연도 || '-'}년 계약 · 계약 ID ${esc(c.id)}${c.용역코드 ? ' · 용역코드 ' + esc(c.용역코드) : ''}</div>
+      ${c.진행중 ? `<button class="btn sm" style="margin-top:10px" data-x="${esc(c.현장명)}">진행 현황 보기 ›</button>` : ''}</section>
+    <section class="card"><h2>계약금액</h2><div class="grid2"><div class="box"><span>계약금액 (VAT 별도)</span><b>${won(c.공급가)}</b></div><div class="box"><span>부가세</span><b>${won(c.부가세)}</b></div>
+      <div class="box"><span>계약금액 (VAT 포함)</span><b>${won(c.계약금)}</b></div><div class="box"><span>수금 / 기성율</span><b>${won(c.수금)}</b><small class="note">${Math.round((c.기성율 || 0) * 100)}%</small></div></div>
+      ${kv([['청구 후 입금 대기', c.대기 ? won(c.대기) + '원' : ''], ['잔여금', won(c.잔여) + '원'], ['미수금', c.미수 ? won(c.미수) + '원' : ''], ['VAT 기준', esc(c.VAT기준)], ['종합보고서', esc(c.종합보고서) + (c.종합보고서금액 ? ' · ' + won(c.종합보고서금액) + '원' : '')], ['계약 외 금액', c.계약외 ? won(c.계약외) + '원' : ''], ['할증분', c.할증 ? won(c.할증) + '원' : '']])}</section>
+    <section class="card"><h2>계약일 · 용역기간</h2>${kv([['계약일', ymd(c.계약일) || '엑셀에 입력 없음'], ['용역기간', period(c)], ['준공(예정)일', ymd(c.준공)], ['완료일', ymd(c.완료일)]])}
+      <p class="note" style="margin:6px 0 0">용역기간은 계약일(없으면 첫 점검일)부터 마지막 보고서 제출일(진행 중이면 준공 예정일)까지입니다.</p></section>
+    <section class="card"><h2>발주처 · 시공사</h2>${kv([['발주처(계약자)', esc(c.발주처)], ['실제 입금처', c.실제입금처 ? esc(c.실제입금처) + ' <span class="note">(계약자와 다름)</span>' : ''], ['시공사', esc(c.시공사)], ['사업자등록번호', esc(c.사업자번호)], ['대표자', esc(c.대표자)], ['소재지', esc(c.소재지)], ['업태 · 종목', esc([c.업태, c.종목].filter(Boolean).join(' · '))], ['현장 주소', esc(c.주소)], ['관할구', esc(c.관할구)], ['규모', esc(c.규모)]])}</section>
+    <section class="card"><h2>점검종류 · 공종</h2><div>${c.종류.map((k) => `<span class="tag">${esc(k)}</span>`).join('') || '-'}</div><div style="margin-top:6px">${c.공종.map((k) => `<span class="tag">${esc(k)}</span>`).join('')}</div></section>
+    <section class="card"><h2>보고서 제출 <span class="note">${c.점검 ? `${c.제출}/${c.점검}` : ''}</span></h2>${(c.점검목록 || []).map((x) => `<div class="row"><div class="grow"><div class="t">${esc(x.항목)}</div><div class="s">점검 ${ymd(x.점검일) || '-'}${x.발송일 ? ' · 발송 ' + ymd(x.발송일) : ''}</div></div><span class="pill ${x.발송일 || x.단계 === '완료' || c.상태 === '완료' ? 'p-ok' : 'p-mute'}">${x.발송일 || x.단계 === '완료' || c.상태 === '완료' ? '제출' : esc(x.단계 || '미제출')}</span></div>`).join('') || '<div class="empty">점검 기록 없음</div>'}</section>
+    <section class="card"><h2>계산서 · 입금</h2>${(c.계산서 || []).map((x) => `<div class="row"><div class="grow"><div class="t">${esc(x.품명 || '-')}</div><div class="s">발행 ${ymd(x.발행일)}${x.입금일 ? ' · 입금 ' + ymd(x.입금일) : ''}</div></div><div style="text-align:right"><b>${won(x.청구)}</b><div><span class="pill ${x.입금일 ? 'p-ok' : 'p-warn'}" style="height:20px">${x.입금일 ? '입금' : '대기'}</span></div></div></div>`).join('') || '<div class="empty">수금대장에 계산서 기록이 없습니다</div>'}</section>
+    <section class="card"><h2>계약서 · 관련 자료</h2>${c.폴더 ? `<a class="btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="${esc(c.폴더)}" target="_blank" rel="noopener">Google Drive 폴더 열기 ›</a><p class="note" style="margin:8px 0 0">현장명과 같은 이름의 Drive 폴더입니다. 열람 권한이 있어야 보입니다.</p>` : '<p class="note" style="margin:0">연결된 자료가 없습니다. Drive 에 현장명과 같은 이름의 폴더가 있으면 자동으로 연결됩니다.</p>'}</section>
+    <section class="card"><h2>업무 진행 이력</h2>${ev.slice(0, 80).map(([d, k, t, col]) => `<div class="tl"><span class="dot" style="background:${col}"></span><div class="grow"><div class="t" style="font-size:14px">${ymd(d) || '-'} · ${k}</div><div class="s note">${esc(t)}</div></div></div>`).join('') || '<div class="empty">기록 없음</div>'}</section>
+    ${c.비고 ? `<section class="card"><h2>비고</h2><div class="memo">${esc(c.비고)}</div></section>` : ''}`, { bind: bindCommon });
+};
+
+// ===================== 메일 · 자료 요청 · 현장 연락: 읽기 쉬운 목록 + 누르면 상세 =====================
+App.lf = {}; // 화면별 필터·검색 { mails: {f, q}, ... }
+const ttl = (t) => String(t || '').replace(/^[^\s_]{2,10}_\s*/, ''); // 제목 앞 '회사명_' 은 목록에서만 생략
+const shortSite = (n) => String(n || '').replace(/\s*(신축공사|복합시설 신축공사|근린생활시설 신축공사|주택재개발정비사업|재건축정비사업|해체공사|공사)$/,'');
+const tday = () => isoD(new Date());
+const daysTo = (d) => (d ? Math.round((new Date(d + 'T00:00:00') - new Date(tday() + 'T00:00:00')) / 864e5) : null);
+const nl = (s) => esc(s).replace(/\n/g, '<br>');
+const clip = (n) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11l-8.5 8.5a5 5 0 01-7-7L14 4a3.5 3.5 0 015 5l-8.5 8.5a2 2 0 01-3-3L15 7"/></svg>`;
+// 공통 목록 틀: 필터 칩 + 검색 + 날짜별 묶음
+function filterList(view, title, items, opt) {
+  const st = App.lf[view] = App.lf[view] || { f: opt.chips[0][0], q: '' };
+  if (!opt.chips.some(([k]) => k === st.f)) st.f = opt.chips[0][0];
+  const paint = () => {
+    const chip = opt.chips.find(([k]) => k === st.f), q = norm(st.q);
+    const xs = items.filter(chip[1]).filter((x) => !q || opt.text(x).some((v) => norm(v).indexOf(q) >= 0));
+    const groups = []; let last = null;
+    xs.forEach((x) => { const g = opt.group(x); if (!last || last.g !== g) groups.push(last = { g, xs: [] }); last.xs.push(x); });
+    $('#fl').innerHTML = groups.map((g) => `<section class="card lcard">${g.g ? `<div class="dhead">${g.g}</div>` : ''}${g.xs.map(opt.row).join('')}</section>`).join('') || `<div class="card"><div class="empty">${opt.empty || '해당하는 기록이 없습니다'}</div></div>`;
+    $('#fc').textContent = xs.length + '건';
+    document.querySelectorAll('[data-sf2]').forEach((b) => b.classList.toggle('on', b.dataset.sf2 === st.f));
+    $('#fl').querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => opt.open(b.dataset.open)));
+  };
+  shell(title, `<div class="chips">${opt.chips.map(([k, f, cls]) => { const n = items.filter(f).length; return `<button class="chip" data-sf2="${esc(k)}">${esc(k)} <span class="cn ${cls && n ? cls : ''}">${n}</span></button>`; }).join('')}</div>
+    <div class="search">${ic('search', 20)}<input id="fq" type="search" placeholder="${esc(opt.ph)}" value="${esc(st.q)}" aria-label="검색"></div>
+    <div class="note" style="padding:0 2px" id="fc"></div><div id="fl" style="display:flex;flex-direction:column;gap:12px"></div>`, { bind: () => {
+    bindCommon(); paint();
+    $('#fq').oninput = (e) => { st.q = e.target.value; paint(); };
+    document.querySelectorAll('[data-sf2]').forEach((b) => (b.onclick = () => { st.f = b.dataset.sf2; paint(); }));
+  } });
+}
+const mkey = (m) => [m.보낸날, m.no, m.제목].join('|');
+const mstat = (m) => (/대기/.test(m.회신상태) ? ['p-' + (m.경과 > 14 ? 'bad' : 'warn'), `회신 대기 · ${m.경과 || 0}일`] : /받음/.test(m.회신상태) ? ['p-ok', '회신 받음'] : ['p-mute', m.회신상태 || '-']);
 
 VIEWS.me = async () => {
   const r = await call('me', {}, { nocache: true });
@@ -461,7 +656,7 @@ function registerView(msg) {
 async function signOut(msg) { App.token = null; Vault.clear(); registerView(msg); }
 
 // ---------- 화면 새 버전 확인 (GitHub Pages 는 10분까지 예전 파일을 보여 줄 수 있어, version.json 을 캐시 없이 확인)
-const APP_VERSION = '2026-11-14b';
+const APP_VERSION = '2026-11-14c';
 async function checkVersion(manual) {
   if (window.google && google.script && google.script.run) return false; // Apps Script 안에서 열 때는 해당 없음
   try {
